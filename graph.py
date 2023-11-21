@@ -26,6 +26,7 @@ SJK_FIRSTSEEN = "firstSeen"
 SJK_LASTSEEN = "lastSeen"
 SJK_SECONDS = "seconds"
 SJK_NANOS = "nanos"
+SJK_SEEN = "seen"
 SJK_TYPE = "type"
 SJK_REASON = "reason"
 SJK_ENTITY = "entity"
@@ -93,7 +94,7 @@ class Range:
 class Node:
 
 	#def __init__(self, json_line):
-	def __init__(self, first_seen=None, last_seen=None, node_type=AV_TYPE):
+	def __init__(self, first_seen=None, last_seen=None, node_type=AV_TYPE, seen = 0):
 		#raw_dict = json.loads(json_line)
 		#self._key = raw_dict.get(SJK_KEY)
 		self._first_seen = first_seen
@@ -102,6 +103,7 @@ class Node:
 		#self._last_seen = Timestamp(raw_dict.get(SJK_TIMESTAMP).get(SJK_LASTSEEN))
 		self._type = node_type
 		#self._type = raw_dict.get(SJK_TYPE)
+		self._seen = seen
 
 
 
@@ -109,7 +111,7 @@ class Node:
 class Edge:
 
 	#def __init__(self, json_line):
-	def __init__(self, node_from, node_to, timestamp, reason, name):
+	def __init__(self, node_from, node_to, timestamp, reason, name, seen):
 		#raw_dict = json.loads(json_line)
 		#self._key = raw_dict.get(SJK_KEY)
 		self._from = node_from
@@ -121,7 +123,8 @@ class Edge:
 		self._reason = reason
 		#self._reason = raw_dict.get(SJK_REASON)
 		self._name = name	
-		#self._name = raw_dict.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME)	
+		#self._name = raw_dict.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME)
+		self._seen = seen
 
 
 	def ntime(self):
@@ -150,22 +153,22 @@ class Graph:
 			if (i%100==0):
 				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_nodes*100), end="")
 			n = json.loads(line)
-			self._nodes_dict[n[SJK_KEY]] = Node(Timestamp(n[SJK_TIMESTAMP][SJK_FIRSTSEEN]), Timestamp(n[SJK_TIMESTAMP][SJK_LASTSEEN]), n[SJK_TYPE])
+			self._nodes_dict[n[SJK_KEY]] = Node(Timestamp(n[SJK_TIMESTAMP][SJK_FIRSTSEEN]), Timestamp(n[SJK_TIMESTAMP][SJK_LASTSEEN]), n[SJK_TYPE], n[SJK_TIMESTAMP][SJK_SEEN])
 		print("\b\b\b\b\b\b\bDone   ")
 
 	def _load_edges(self):
-		#print("load edges : xxx.xx%", end="")
+		print("load edges : xxx.xx%", end="")
 		self._edges_dict = dict()
 		with open(self._raw_edges_filename, "r") as fd:
 			lines = fd.readlines()
 		self.nb_edges = len(lines)
 		for i, line in enumerate(lines):
-			#if (i%100==0):
-				#print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
+			if (i%100==0):
+				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
 			e = json.loads(line)
 			#print(datetime.fromtimestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]["seconds"]).strftime("%d/%m/%Y %H:%M:%S"))
-			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME))
-		#print("\b\b\b\b\b\b\bDone   ")
+			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME), e[SJK_TIMESTAMP][SJK_SEEN])
+		print("\b\b\b\b\b\b\bDone   ")
 
 	def _buid_graph(self):
 		print("build graph : xxx.xx%", end="")
