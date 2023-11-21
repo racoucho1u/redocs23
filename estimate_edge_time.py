@@ -5,42 +5,59 @@ from datetime import datetime
 filepath_nodes = "../REDOCS23/bare_effects_filtered.jsonl"
 filepath_edges = "../REDOCS23/bare_edge_effects_filtered.jsonl"
 
+estimated_edges = []
+estimated_edges_file = "estimated_edges.json"
+
 output_nodes = "nodes.csv"
 output_edges = "edges.csv"
 
 nodes = {}
 edges = {}
 
-def noTimeEdge(tf_seconds,nfrom,nto):
+
+def noTimeNode(node):
+	return()
+
+
+def noTimeEdge(tf_seconds,tf_nano,nfrom,nto):
 
 	changed = False
+	dic = {
+		"changed": changed,
+		"estimated_before_seconds": tf_seconds,
+		"estimated_before_nanos": tf_nanos,
+		"estimated_after_seconds": tf_seconds,
+		"estimated_after_nanos": tf_nanos
+		}
 
 	if datetime.fromtimestamp(tf_seconds).year == 2023:
 
 		tf_from = datetime.fromtimestamp(nfrom["tf_seconds"]).year
 		tf_to = datetime.fromtimestamp(nto["tl_seconds"]).year
 
-		estimated_before = 0
-		estimated_after = nto["tl_seconds"]
+		estimated_before_sec = 0
+		estimated_before_nano = 0
+		estimated_after_sec = nto["tl_seconds"]
+		estimated_after_nano = nto["tl_nanos"]
 
 		if (tf_from != 2023):
-			estimated_before = nfrom["tf_seconds"]
-			print(estimated_before)
+			estimated_before_sec = nfrom["tf_seconds"]
+			estimated_before_nano = nfrom["tf_nanos"]
 			changed = True
+		else:
+			noTimeNode(nfrom)
 		if (tf_to != 2023):
 			#estimated_after = nto["tl_seconds"]
 			changed = True
+		else:
+			noTimeNode(nto)
 
 		dic = {
 			"changed": changed,
-			"estimated_before": estimated_before,
-			"estimated_after": estimated_after
-			}
-	else:
-		dic = {
-			"changed": changed,
-			"estimated_before": tf_seconds,
-			"estimated_after": tf_seconds
+			"estimated_before_seconds": estimated_before_sec,
+			"estimated_before_nanos": estimated_before_nano,
+			"estimated_after_seconds": estimated_after_sec,
+			"estimated_after_nanos": estimated_after_nano
 			}
 		
 	return(dic)
@@ -76,7 +93,7 @@ with open(filepath_nodes,"r") as f:
         tf_seconds = tfirst["seconds"]
         tf_nanos = 0
 
-		tle_seconds = tlast["seconds"]
+        tle_seconds = tlast["seconds"]
         tle_nanos = 0
         
         tfe_seconds = 0
@@ -188,11 +205,7 @@ with open(filepath_edges,"r") as f:
             "nanos": nto["tl_nanos"]
         }
         
-        dic = noTimeEdge(tf_seconds,nfrom,nto)
-
-        if (dic["changed"]):
-        	before = dic["estimated_before"]
-        	after = dic["estimated_after"]
+        dic = noTimeEdge(tf_seconds,tf_nanos,nfrom,nto)
 
         row = {
             "_key":key,
@@ -201,14 +214,19 @@ with open(filepath_edges,"r") as f:
             "timestamp": {
 			 	"timestamp": {"seconds": tt_seconds, "nanos": tt_nanos}, 
 			 	"firstSeen": {"seconds": tf_seconds, "nanos": tf_nanos}, 
-			 	"lastSeen": {"seconds": tl_seconds, "nanos": tl_nanosl},
+			 	"lastSeen": {"seconds": tl_seconds, "nanos": tl_nanos},
 			 	# A changer par les resultat du dict + prendre en compte les nanos dans la fonction
-			 	"estimatedFst": {"seconds": tl_seconds, "nanos": tl_nanosl},
-			 	"estimatedLast": {"seconds": tl_seconds, "nanos": tl_nanosl},
+			 	"estimation": dic["changed"],
+			 	"estimatedFst": {"seconds": dic["estimated_before_seconds"], "nanos": dic["estimated_before_nanos"]},
+			 	"estimatedLast": {"seconds": dic["estimated_after_seconds"], "nanos": dic["estimated_after_nanos"]},
 			 	"seen": tseen}, 
             "reason":reason,
             "entity":{"name":ename,"version":eversion},
             "uuid":uuid
         }
         
-        edges[key] = row
+        estimated_edges.append(row)
+
+with open("estimated_edges_file",'a') as eef:
+	for e in estimated_edges:
+		json.dump(e,eef)
