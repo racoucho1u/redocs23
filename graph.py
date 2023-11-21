@@ -12,6 +12,11 @@ INFO  = " \033[32m[INFO]\033[0m : "
 WARN  = " \033[33m[WARN]\033[0m : "
 ERROR = "\033[31m[ERROR]\033[0m : "
 
+
+# Analyse Timestamp
+analyse_datetime = "2023-01-01T00:00:00"
+analyse_nanos = int(datetime.fromisoformat(analyse_datetime).timestamp()*1e9)
+
 # String Json Key
 SJK_KEY = "_key"
 SJK_FROM = "_from"
@@ -36,19 +41,51 @@ class Timestamp:
 
 	def __init__(self, timestamp_dict=None):
 		if timestamp_dict is None:
-			pass
+			self._nanos = 0
 		else:
-			self._seconds = timestamp_dict.get(SJK_SECONDS)
-			self._nanos = timestamp_dict.get(SJK_NANOS, AV_NANOS)
-			self._datetime = datetime.fromtimestamp(self._seconds)
-
-		#if self._datetime.year == 2003:
-		#	pass
-
-
+			self._nanos = timestamp_dict.get(SJK_NANOS, AV_NANOS) + 1e9*timestamp_dict.get(SJK_SECONDS)
+			if self._nanos >= analyse_nanos:
+				self._nanos = 0
 
 	def __str__(self):
-		return datetime.fromtimestamp(self._seconds).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos)
+		return datetime.fromtimestamp(round(self._nanos/1e9)).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos%1e9)
+
+	def __eq__(self, other):
+		return self._nanos == other._nanos
+
+	def __ne__(self, other):
+		return self._nanos != other._nanos
+
+	def __lt__(self, other):
+		return self._nanos < other._nanos
+
+	def __gt__(self, other):
+		return self._nanos > other._nanos
+
+	def __le__(self, other):
+		return self._nanos <= other._nanos
+
+	def __ge__(self, other):
+		return self._nanos >= other._nanos
+
+	def is_in(guess):
+		return guess._timestamp_a <= self._nanos and self._nanos <= guess._timestamp_b
+
+	def compare_to_guess(guess):
+		if self.is_in(guess):
+			return 0
+		elif self._nanos < guess.timestamp_a:
+			return -1
+		else:
+			return 1
+
+
+class Range:
+
+	def __init__(self, timestamp_a, timestamp_b):
+		self._timestamp_a = timestamp_a
+		self._timestamp_b = timestamp_b
+
 
 
 
@@ -65,6 +102,7 @@ class Node:
 		#self._last_seen = Timestamp(raw_dict.get(SJK_TIMESTAMP).get(SJK_LASTSEEN))
 		self._type = node_type
 		#self._type = raw_dict.get(SJK_TYPE)
+
 
 
 
@@ -86,6 +124,8 @@ class Edge:
 		#self._name = raw_dict.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME)	
 
 
+	def ntime(self):
+		return self._timestamp._nanos
 
 
 class Graph:
@@ -97,6 +137,7 @@ class Graph:
 		self._load_nodes()
 		self._load_edges()
 		self._buid_graph()
+
 
 
 	def _load_nodes(self):
@@ -112,20 +153,19 @@ class Graph:
 			self._nodes_dict[n[SJK_KEY]] = Node(Timestamp(n[SJK_TIMESTAMP][SJK_FIRSTSEEN]), Timestamp(n[SJK_TIMESTAMP][SJK_LASTSEEN]), n[SJK_TYPE])
 		print("\b\b\b\b\b\b\bDone   ")
 
-
 	def _load_edges(self):
-		print("load edges : xxx.xx%", end="")
+		#print("load edges : xxx.xx%", end="")
 		self._edges_dict = dict()
 		with open(self._raw_edges_filename, "r") as fd:
 			lines = fd.readlines()
 		self.nb_edges = len(lines)
 		for i, line in enumerate(lines):
-			if (i%100==0):
-				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
+			#if (i%100==0):
+				#print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
 			e = json.loads(line)
+			#print(datetime.fromtimestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]["seconds"]).strftime("%d/%m/%Y %H:%M:%S"))
 			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME))
-		print("\b\b\b\b\b\b\bDone   ")
-
+		#print("\b\b\b\b\b\b\bDone   ")
 
 	def _buid_graph(self):
 		print("build graph : xxx.xx%", end="")
@@ -162,8 +202,18 @@ class Graph:
 		self.nb_nodes = len(self._nodes_dict)
 		print(f"{nb_missing_node=}")
 
+	def edges(self):
+		return list(self._edges_dict.values())
+
+	def nodes(self):
+		return list(self._nodes_dict.values())
+
+	def edges_from(self, node_key):
+		return [self._edges_dict[edge_key] for edge_key in self._outs[node_key] ]
 
 
+	def edges_to(self, node_key):
+		return [self._edges_dict[edge_key] for edge_key in self._ins[node_key] ]
 
 
 
