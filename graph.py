@@ -80,12 +80,13 @@ class Timestamp:
 			return 1
 
 
+
+
 class Range:
 
 	def __init__(self, timestamp_a, timestamp_b):
 		self._timestamp_a = timestamp_a
 		self._timestamp_b = timestamp_b
-
 
 
 
@@ -134,6 +135,7 @@ class Graph:
 		self._raw_nodes_filename = raw_nodes_filename
 		self._raw_edges_filename = raw_edges_filename
 
+
 		self._load_nodes()
 		self._load_edges()
 		self._buid_graph()
@@ -154,24 +156,25 @@ class Graph:
 		print("\b\b\b\b\b\b\bDone   ")
 
 	def _load_edges(self):
-		#print("load edges : xxx.xx%", end="")
+		print("load edges : xxx.xx%", end="")
 		self._edges_dict = dict()
 		with open(self._raw_edges_filename, "r") as fd:
 			lines = fd.readlines()
 		self.nb_edges = len(lines)
 		for i, line in enumerate(lines):
-			#if (i%100==0):
-				#print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
+			if (i%100==0):
+				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
 			e = json.loads(line)
 			#print(datetime.fromtimestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]["seconds"]).strftime("%d/%m/%Y %H:%M:%S"))
 			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME))
-		#print("\b\b\b\b\b\b\bDone   ")
+		print("\b\b\b\b\b\b\bDone   ")
 
 	def _buid_graph(self):
 		print("build graph : xxx.xx%", end="")
 
 		self._outs = dict()
 		self._ins = dict()
+		self._ghost_nodes = set()
 
 		nb_missing_node = 0
 		i = 0
@@ -182,11 +185,13 @@ class Graph:
 
 			if not (edge._from in self._nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._from=} not in nodes !")
-				self._nodes_dict[edge._from] = Node()
+				#self._nodes_dict[edge._from] = Node()
+				self._ghost_nodes.add(edge._from)
 				nb_missing_node += 1
 			if not (edge._to in self._nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._to=} not in nodes !")
-				self._nodes_dict[edge._to] = Node()
+				#self._nodes_dict[edge._to] = Node()
+				self._ghost_nodes.add(edge._to)
 				nb_missing_node += 1
 
 			if not edge._from in self._outs:
