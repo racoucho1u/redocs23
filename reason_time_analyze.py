@@ -19,19 +19,40 @@ normalized_data_edge = data_edge
 # mauvais enchainement de login/logout _ connect/disconnect
 def check_in_out(data_nodes, normalized_data_edge):
 
-    # reasons = ['DISCONNECT', 'HAS', 'EXECUTE', 'ENCODE', 'START', 'LOGOFF', 'USES', 'COMPRESS',
-    #            'LOGON', 'INDICATE', 'CONTAINS', 'INITIAL', 'SEND', 'STOP', 'CREATE', 'RECEIVE', 'CONNECT']
+    reasons = ['DISCONNECT', 'HAS', 'EXECUTE', 'ENCODE', 'START', 'LOGOFF', 'USES', 'COMPRESS',
+               'LOGON', 'INDICATE', 'CONTAINS', 'INITIAL', 'SEND', 'STOP', 'CREATE', 'RECEIVE', 'CONNECT']
 
-    reasons = ['DISCONNECT', 'EXECUTE', 'START', 'LOGOFF', 'USES', 'COMPRESS',
-               'LOGON', 'INDICATE', 'SEND', 'STOP', 'CREATE', 'RECEIVE', 'CONNECT']
+    # reasons = ['DISCONNECT', 'EXECUTE', 'START', 'LOGOFF', 'USES',
+    #            'LOGON', 'INDICATE', 'SEND', 'STOP', 'CREATE', 'RECEIVE', 'CONNECT']
 
     data = []
 
+    reasonEdgesNotIn2023 = []
+
     for reason in reasons:
 
-        print(f"Reason: {reason}")
-
         edges = normalized_data_edge.query(f'reason=="{reason}"')
+
+        print(f"Reason: {reason} -> Found {edges.shape[0]} occurences")
+
+        timestamps = edges["timestamp"].values.tolist()
+
+        in2021 = False
+        for tp in timestamps:
+            time_edge = tp['firstSeen']
+            time_edge_dt = datetime.fromtimestamp(time_edge["seconds"])
+            time_edge_dt += timedelta(
+                microseconds=time_edge.get("nanos", 0) // 1000)
+            if (time_edge_dt.year == 2021):
+                in2021 = True
+                break
+
+        if (not in2021):
+            reasonEdgesNotIn2023 += [reason]
+            print("\t => All occurrences are not in 2021")
+            continue
+
+        print("="*50)
 
         for index, edge in edges.iterrows():
 
@@ -41,18 +62,19 @@ def check_in_out(data_nodes, normalized_data_edge):
                 microseconds=time_edge.get("nanos", 0) // 1000)
 
             if (time_edge_dt.year != 2021):
+                # print(f'Found "{reason}" edge is not in 2021')
                 continue
 
-            print(time_edge_dt.isoformat())
+            # print(time_edge_dt.isoformat())
 
             lower_bound_time = time_edge_dt - timedelta(seconds=5000)
-            print(lower_bound_time.isoformat())
+            # print(lower_bound_time.isoformat())
             upper_bound_time = time_edge_dt + timedelta(seconds=5000)
-            print(upper_bound_time.isoformat())
-
-            print("-"*40)
+            # print(upper_bound_time.isoformat())
 
             data += [(lower_bound_time, upper_bound_time, reason)]
+
+    reasons = [reason for reason in reasons if reason not in reasonEdgesNotIn2023]
 
     cats = {reason: (index+1) for index, reason in enumerate(reasons)}
     colormapping = {reason: ("C" + str(index))
@@ -78,7 +100,7 @@ def check_in_out(data_nodes, normalized_data_edge):
 
     loc = mdates.DayLocator()
     ax.xaxis.set_major_locator(loc)
-    # ax.xaxis.set_major_formatter(mdates.AutoDateFormatter(loc))    
+    # ax.xaxis.set_major_formatter(mdates.AutoDateFormatter(loc))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y:%m:%d'))
 
     # Rotates and right-aligns the x labels so they don't crowd each other.
