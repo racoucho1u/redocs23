@@ -168,7 +168,7 @@ with open(filepath_edges,"r") as f:
             "nanos": nto["tl_nanos"]
         }
         
-        if not datetime.fromtimestamp(tf_seconds).date.year(2023):
+        if datetime.fromtimestamp(tf_seconds).year != 2023:
             from_edge = timestamp_lt(timestamp_from,timestamp_edge)   
             edge_to = timestamp_lt(timestamp_edge,timestamp_to)
             
@@ -178,7 +178,7 @@ with open(filepath_edges,"r") as f:
             if not edge_to:
                 print(f"Error 4 : in edge {key} : edge timestamp is superior to To node {pto} timestamp")
         
-        if not datetime.fromtimestamp(nfrom["tf_seconds"]).date.year(2023) and datetime.fromtimestamp(nto["tl_seconds"]).date.year(2023):
+        if (datetime.fromtimestamp(nfrom["tf_seconds"]).year != 2023) and (datetime.fromtimestamp(nto["tl_seconds"]).year != 2023):
             swap = timestamp_lt(timestamp_from,timestamp_to)
             
             if not swap:
