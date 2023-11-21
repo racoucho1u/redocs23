@@ -21,8 +21,8 @@ for e in g.edges():
     timestamp_to = nto.last_seen()
     
     if e.timestamp():
-        from_edge = (timestamp_from < e.timestamp())
-        edge_to = (e.timestamp() < timestamp_to)
+        from_edge = (timestamp_from <= e.timestamp())
+        edge_to = (e.timestamp() <= timestamp_to)
         
         if not from_edge:
             print(f"Error 3")
@@ -33,8 +33,8 @@ for e in g.edges():
             #print(f"Error 4 : in edge {key} : edge timestamp is superior to To node {pto} timestamp")
         
     if (timestamp_from) and (timestamp_to):
-        swap = (timestamp_from < timestamp_to)
+        swap = (timestamp_from <= timestamp_to)
         
         if not swap:
             print("Error 5")
-            #print(f"Error 5 : in edge {key} : To node {pto} timestamp is superior to From node {pfrom} timestamp")
+            #print(f"Error 5 : in edge {key} : To node {pto} timestamp is inferior to From node {pfrom} timestamp")

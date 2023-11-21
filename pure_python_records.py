@@ -13,7 +13,7 @@ output_edges = "edges.csv"
 nodes = {}
 
 
-def timestamp_lt(timestamp_a, timestamp_b):
+def timestamp_le(timestamp_a, timestamp_b):
     
     """
     timestamp are dict with structure :
@@ -32,7 +32,7 @@ def timestamp_lt(timestamp_a, timestamp_b):
     if "nanos" in timestamp_b:
         nano_b = timestamp_b["nanos"]
         
-    return (second_a < second_b) or (second_a == second_b and nano_a < nano_b)
+    return (second_a < second_b) or (second_a == second_b and nano_a <= nano_b)
 
 
 with open(filepath_nodes,"r") as f:
@@ -169,8 +169,8 @@ with open(filepath_edges,"r") as f:
         }
         
         if datetime.fromtimestamp(tf_seconds).year != 2023:
-            from_edge = timestamp_lt(timestamp_from,timestamp_edge)   
-            edge_to = timestamp_lt(timestamp_edge,timestamp_to)
+            from_edge = timestamp_le(timestamp_from,timestamp_edge)   
+            edge_to = timestamp_le(timestamp_edge,timestamp_to)
             
             if not from_edge:
                 print(f"Error 3 : in edge {key} : edge timestamp is inferior to From node {pfrom} timestamp")
@@ -179,10 +179,10 @@ with open(filepath_edges,"r") as f:
                 print(f"Error 4 : in edge {key} : edge timestamp is superior to To node {pto} timestamp")
         
         if (datetime.fromtimestamp(nfrom["tf_seconds"]).year != 2023) and (datetime.fromtimestamp(nto["tl_seconds"]).year != 2023):
-            swap = timestamp_lt(timestamp_from,timestamp_to)
+            swap = timestamp_le(timestamp_from,timestamp_to)
             
             if not swap:
-                print(f"Error 5 : in edge {key} : To node {pto} timestamp is superior to From node {pfrom} timestamp")
+                print(f"Error 5 : in edge {key} : To node {pto} timestamp is inferior to From node {pfrom} timestamp")
                 
 
 # filepath_nodes = "bare_effects_filtered.jsonl"
