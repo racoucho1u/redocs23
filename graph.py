@@ -18,6 +18,9 @@ ERROR = "\033[31m[ERROR]\033[0m : "
 analyse_datetime = "2023-01-01T00:00:00"
 analyse_nanos = int(datetime.fromisoformat(analyse_datetime).timestamp()*1e9)
 
+
+
+
 # String Json Key
 SJK_KEY = "_key"
 SJK_FROM = "_from"
@@ -38,6 +41,12 @@ AV_NANOS = 0
 AV_NAME = "NaN"
 AV_TYPE = "ghost_node"
 
+# globals
+FIRST_TIMESTAMP = None
+LAST_TIMESTAMP = None
+
+
+
 
 class Timestamp:
 
@@ -50,7 +59,6 @@ class Timestamp:
 				self._nanos = 0
 
 	def __hash__(self):
-		#print(type(hash(self._nanos)))
 		return hash(self._nanos)
 
 	def __str__(self):
@@ -77,27 +85,13 @@ class Timestamp:
 	def __ge__(self, other):
 		return self._nanos >= other._nanos
 
-	def is_in(self, guess):
-		return guess._timestamp_a <= self._nanos and self._nanos <= guess._timestamp_b
-
-	def compare_to_guess(self, guess):
-		if self.is_in(guess):
-			return 0
-		elif self._nanos < guess.timestamp_a:
+	def estimated_cmp(self, node_or_edge):
+		if self < node_or_edge.estimated_first:
 			return -1
-		else:
+		elif self > node_or_edge.estimated_last:
 			return 1
-
-
-
-
-
-class Range:
-
-	def __init__(self, timestamp_a, timestamp_b):
-		self._timestamp_a = timestamp_a
-		self._timestamp_b = timestamp_b
-
+		else:
+			return 0
 
 
 
@@ -109,8 +103,16 @@ class Node:
 		self._last_seen = last_seen
 		self.type = node_type
 		self.seen = seen
-		self.estimated_first = None
-		self.estimated_last = None
+
+	def _build(self):
+		if self._first_seen:
+			self.estimated_first = self._first_seen
+		else:
+			self.estimated_first = FIRST_TIMESTAMP
+		if self._last_seen:
+			self.estimated_last = self._last_seen
+		else:
+			self.estimated_last = LAST_TIMESTAMP
 
 	def __bool__(self):
 		return not self.type==AV_TYPE
@@ -122,6 +124,12 @@ class Node:
 	def last_seen(self):
 		# return a timestamp object
 		return self._last_seen
+
+	def estimated_cmp(self, timestamp):
+		return timestamp.estimated_cmp(self)
+
+	def mu(self):
+		return self.estimated_last._nanos - self.estimated_first._nanos
 
 
 
@@ -136,8 +144,14 @@ class Edge:
 		self.reason = reason
 		self.name = name	
 		self.seen = seen
-		self.estimated_first = None
-		self.estimated_last = None
+
+	def _build(self):
+		if self._timestamp:
+			self.estimated_first = self._timestamp
+			self.estimated_last = self._timestamp
+		else:
+			self.estimated_first = FIRST_TIMESTAMP
+			self.estimated_last = LAST_TIMESTAMP
 
 	def same_nodes(self, other):
 		return ((self._uuid_from == other._uuid_from and self._uuid_to == other._uuid_to) or (self._uuid_from == other._uuid_to and self._uuid_to == other._uuid_from))
@@ -154,17 +168,16 @@ class Edge:
 		else:
 			return g._nodes_dict[self._uuid_to]
 
-	def reason(self):
-		print("reason() is deprecated, use reason without parenthese")
-		return self.reason
-
 	def timestamp(self):
 		# return a timestamp object
 		return self._timestamp
 
-	def ntime(self):
-		print("ntime() is deprecated, use timestamp()")
-		return self._timestamp._nanos
+	def estimated_cmp(self, timestamp):
+		return timestamp.estimated_cmp(self)
+
+	def mu(self):
+		return self.estimated_last._nanos - self.estimated_first._nanos
+
 
 
 
@@ -177,8 +190,14 @@ class Graph:
 
 		self._load_nodes()
 		self._load_edges()
-		self._buid_graph()
-
+		self._init_globals()
+		self._build()
+		for e in self.edges():
+			e._build()
+		for n in self.nodes():
+			n._build()
+		print("mu={:25.0f}".format((LAST_TIMESTAMP._nanos - FIRST_TIMESTAMP._nanos)*(len(self.edges())+len(self.nodes()))))
+		print("mu={:25.0f}".format(self.mu()))
 
 
 	def _load_nodes(self):
@@ -208,7 +227,24 @@ class Graph:
 			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_KEY], e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME), e[SJK_TIMESTAMP][SJK_SEEN])
 		print("\b\b\b\b\b\b\bDone   ")
 
-	def _buid_graph(self):
+	def _init_globals(self):
+		global LAST_TIMESTAMP
+		global FIRST_TIMESTAMP
+
+		timestamps = set()
+		for node in self.nodes():
+			if t:=node.first_seen():
+				timestamps.add(t)
+			if t:=node.last_seen():
+				timestamps.add(t)
+		for edge in self.edges():
+			if t:=edge.timestamp():
+				timestamps.add(t)
+
+		LAST_TIMESTAMP = max(timestamps)
+		FIRST_TIMESTAMP = min(timestamps)
+
+	def _build(self):
 		print("build graph : xxx.xx%", end="")
 
 		self._outs = dict()
@@ -238,6 +274,7 @@ class Graph:
 				self._ins[edge._uuid_to] = []
 			self._ins[edge._uuid_to].append(key)
 
+
 			i += 1
 		print("\b\b\b\b\b\b\bDone   ")
 		self.nb_nodes = len(self._nodes_dict)
@@ -255,23 +292,23 @@ class Graph:
 	def edges_to(self, node_uuid):
 		return [self._edges_dict[edge_key] for edge_key in self._ins.get(node_uuid, []) ]
 
+	def mu(self):
+		# ammélioration significative du calcul de mu en l'actualisant en temps réel avec __setattr__ sur les estimated
+		# construire MU en gllobal initiée par self._init_globals()
+		# finalement, peut etre pas necessaire au vu de la fréquence d'appel
+		rop = 0
+		for e in self.edges():
+			rop += e.mu()
+		for n in self.nodes():
+			rop += n.mu()
+		return rop
+
+
 
 
 g = Graph(nodes_filename, edges_filename)
 
-timestamps = set()
-for node in g.nodes():
-	if t:=node.first_seen():
-		timestamps.add(t)
-	if t:=node.last_seen():
-		timestamps.add(t)
-for edge in g.edges():
-	if t:=edge.timestamp():
-		timestamps.add(t)
 
-
-LAST_TIMESTAMP = max(timestamps)
-FIRST_TIMESTAMP = min(timestamps)
 
 
 
