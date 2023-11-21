@@ -13,6 +13,7 @@ WARN  = " \033[33m[WARN]\033[0m : "
 ERROR = "\033[31m[ERROR]\033[0m : "
 
 
+
 # Analyse Timestamp
 analyse_datetime = "2023-01-01T00:00:00"
 analyse_nanos = int(datetime.fromisoformat(analyse_datetime).timestamp()*1e9)
@@ -47,6 +48,10 @@ class Timestamp:
 			self._nanos = timestamp_dict.get(SJK_NANOS, AV_NANOS) + 1e9*timestamp_dict.get(SJK_SECONDS)
 			if self._nanos >= analyse_nanos:
 				self._nanos = 0
+
+	def __hash__(self):
+		#print(type(hash(self._nanos)))
+		return hash(self._nanos)
 
 	def __str__(self):
 		return datetime.fromtimestamp(round(self._nanos/1e9)).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos%1e9)
@@ -98,26 +103,24 @@ class Range:
 
 class Node:
 
-	#def __init__(self, json_line):
-	def __init__(self, first_seen=None, last_seen=None, node_type=AV_TYPE, seen = 0):
-		#raw_dict = json.loads(json_line)
-		#self._key = raw_dict.get(SJK_KEY)
+	def __init__(self, uuid="00000000-0000-0000-0000-000000000000", first_seen=None, last_seen=None, node_type=AV_TYPE, seen = 0):
+		self.uuid = uuid
 		self._first_seen = first_seen
-		#self._first_seen = Timestamp(raw_dict.get(SJK_TIMESTAMP).get(SJK_FIRSTSEEN))
 		self._last_seen = last_seen
-		#self._last_seen = Timestamp(raw_dict.get(SJK_TIMESTAMP).get(SJK_LASTSEEN))
-		self._type = node_type
-		#self._type = raw_dict.get(SJK_TYPE)
-		self._seen = seen
+		self.type = node_type
+		self.seen = seen
+		self.estimated_first = None
+		self.estimated_last = None
 
 	def __bool__(self):
-		return not self._type==AV_TYPE
-
+		return not self.type==AV_TYPE
 
 	def first_seen(self):
+		# return a timestamp object
 		return self._first_seen
 
 	def last_seen(self):
+		# return a timestamp object
 		return self._last_seen
 
 
@@ -125,21 +128,16 @@ class Node:
 
 class Edge:
 
-	#def __init__(self, json_line):
-	def __init__(self, uuid_from, uuid_to, timestamp, reason, name, seen):
-		#raw_dict = json.loads(json_line)
-		#self._key = raw_dict.get(SJK_KEY)
+	def __init__(self, uuid, uuid_from, uuid_to, timestamp, reason, name, seen):
+		self.uuid = uuid
 		self._uuid_from = uuid_from
-		#self._from = raw_dict.get(SJK_FROM)
 		self._uuid_to = uuid_to
-		#self._to = raw_dict.get(SJK_TO)
 		self._timestamp = timestamp
-		#self._timestamp = Timestamp(raw_dict.get(SJK_TIMESTAMP).get(SJK_FIRSTSEEN))
-		self._reason = reason
-		#self._reason = raw_dict.get(SJK_REASON)
-		self._name = name	
-		#self._name = raw_dict.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME)
-		self._seen = seen
+		self.reason = reason
+		self.name = name	
+		self.seen = seen
+		self.estimated_first = None
+		self.estimated_last = None
 
 	def same_nodes(self, other):
 		return ((self._uuid_from == other._uuid_from and self._uuid_to == other._uuid_to) or (self._uuid_from == other._uuid_to and self._uuid_to == other._uuid_from))
@@ -157,13 +155,15 @@ class Edge:
 			return g._nodes_dict[self._uuid_to]
 
 	def reason(self):
-		return self._reason
+		print("reason() is deprecated, use reason without parenthese")
+		return self.reason
 
 	def timestamp(self):
+		# return a timestamp object
 		return self._timestamp
 
 	def ntime(self):
-		print("deprecated")
+		print("ntime() is deprecated, use timestamp()")
 		return self._timestamp._nanos
 
 
@@ -191,7 +191,7 @@ class Graph:
 			if (i%100==0):
 				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_nodes*100), end="")
 			n = json.loads(line)
-			self._nodes_dict[n[SJK_KEY]] = Node(Timestamp(n[SJK_TIMESTAMP][SJK_FIRSTSEEN]), Timestamp(n[SJK_TIMESTAMP][SJK_LASTSEEN]), n[SJK_TYPE], n[SJK_TIMESTAMP][SJK_SEEN])
+			self._nodes_dict[n[SJK_KEY]] = Node(n[SJK_KEY], Timestamp(n[SJK_TIMESTAMP][SJK_FIRSTSEEN]), Timestamp(n[SJK_TIMESTAMP][SJK_LASTSEEN]), n[SJK_TYPE], n[SJK_TIMESTAMP][SJK_SEEN])
 		print("\b\b\b\b\b\b\bDone   ")
 
 	def _load_edges(self):
@@ -205,7 +205,7 @@ class Graph:
 				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
 			e = json.loads(line)
 			#print(datetime.fromtimestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]["seconds"]).strftime("%d/%m/%Y %H:%M:%S"))
-			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME), e[SJK_TIMESTAMP][SJK_SEEN])
+			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_KEY], e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME), e[SJK_TIMESTAMP][SJK_SEEN])
 		print("\b\b\b\b\b\b\bDone   ")
 
 	def _buid_graph(self):
@@ -249,15 +249,29 @@ class Graph:
 	def nodes(self):
 		return list(self._nodes_dict.values())
 
-	def edges_from(self, node_key):
-		return [self._edges_dict[edge_key] for edge_key in self._outs[node_key] ]
+	def edges_from(self, node_uuid):
+		return [self._edges_dict[edge_key] for edge_key in self._outs.get(node_uuid, []) ]
 
-	def edges_to(self, node_key):
-		return [self._edges_dict[edge_key] for edge_key in self._ins[node_key] ]
+	def edges_to(self, node_uuid):
+		return [self._edges_dict[edge_key] for edge_key in self._ins.get(node_uuid, []) ]
 
 
 
 g = Graph(nodes_filename, edges_filename)
+
+timestamps = set()
+for node in g.nodes():
+	if t:=node.first_seen():
+		timestamps.add(t)
+	if t:=node.last_seen():
+		timestamps.add(t)
+for edge in g.edges():
+	if t:=edge.timestamp():
+		timestamps.add(t)
+
+
+LAST_TIMESTAMP = max(timestamps)
+FIRST_TIMESTAMP = min(timestamps)
 
 
 

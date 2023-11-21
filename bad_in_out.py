@@ -128,6 +128,7 @@ def check_in_out(data_nodes, normalized_data_edge):
 def check_alternance(reasonA, reasonB, reasonA_can_fail, reasonB_can_fail=False):
     edgeA = [e in g.edges() if e.reason()==reasonA]
     edgeB = [e in g.edges() if e.reason()==reasonB]
+    
 
 
 
