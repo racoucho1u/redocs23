@@ -69,10 +69,10 @@ class Timestamp:
 	def __ge__(self, other):
 		return self._nanos >= other._nanos
 
-	def is_in(guess):
+	def is_in(self, guess):
 		return guess._timestamp_a <= self._nanos and self._nanos <= guess._timestamp_b
 
-	def compare_to_guess(guess):
+	def compare_to_guess(self, guess):
 		if self.is_in(guess):
 			return 0
 		elif self._nanos < guess.timestamp_a:
@@ -81,12 +81,13 @@ class Timestamp:
 			return 1
 
 
+
+
 class Range:
 
 	def __init__(self, timestamp_a, timestamp_b):
 		self._timestamp_a = timestamp_a
 		self._timestamp_b = timestamp_b
-
 
 
 
@@ -137,6 +138,7 @@ class Graph:
 		self._raw_nodes_filename = raw_nodes_filename
 		self._raw_edges_filename = raw_edges_filename
 
+
 		self._load_nodes()
 		self._load_edges()
 		self._buid_graph()
@@ -175,6 +177,7 @@ class Graph:
 
 		self._outs = dict()
 		self._ins = dict()
+		self._ghost_nodes = set()
 
 		nb_missing_node = 0
 		i = 0
@@ -185,11 +188,13 @@ class Graph:
 
 			if not (edge._from in self._nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._from=} not in nodes !")
-				self._nodes_dict[edge._from] = Node()
+				#self._nodes_dict[edge._from] = Node()
+				self._ghost_nodes.add(edge._from)
 				nb_missing_node += 1
 			if not (edge._to in self._nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._to=} not in nodes !")
-				self._nodes_dict[edge._to] = Node()
+				#self._nodes_dict[edge._to] = Node()
+				self._ghost_nodes.add(edge._to)
 				nb_missing_node += 1
 
 			if not edge._from in self._outs:
