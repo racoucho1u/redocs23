@@ -122,11 +122,23 @@ class Edge:
 		self._reason = reason
 		#self._reason = raw_dict.get(SJK_REASON)
 		self._name = name	
-		#self._name = raw_dict.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME)	
+		#self._name = raw_dict.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME)
 
+	def same_nodes(self, other):
+		return ((self._from == other._from and self._to == other._to) or (self._from == other._to and self._to == other._from))
+
+	def begin(self):
+		return self._from
+
+	def end(self):
+		return self._to
+
+	def reason(self):
+		return self._reason
 
 	def ntime(self):
 		return self._timestamp._nanos
+
 
 
 class Graph:
