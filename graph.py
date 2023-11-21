@@ -122,12 +122,12 @@ class Node:
 class Edge:
 
 	#def __init__(self, json_line):
-	def __init__(self, node_from, node_to, timestamp, reason, name, seen):
+	def __init__(self, uuid_from, uuid_to, timestamp, reason, name, seen):
 		#raw_dict = json.loads(json_line)
 		#self._key = raw_dict.get(SJK_KEY)
-		self._from = node_from
+		self._uuid_from = uuid_from
 		#self._from = raw_dict.get(SJK_FROM)
-		self._to = node_to
+		self._uuid_to = uuid_to
 		#self._to = raw_dict.get(SJK_TO)
 		self._timestamp = timestamp
 		#self._timestamp = Timestamp(raw_dict.get(SJK_TIMESTAMP).get(SJK_FIRSTSEEN))
@@ -138,13 +138,13 @@ class Edge:
 		self._seen = seen
 
 	def same_nodes(self, other):
-		return ((self._from == other._from and self._to == other._to) or (self._from == other._to and self._to == other._from))
+		return ((self._uuid_from == other._uuid_from and self._uuid_to == other._uuid_to) or (self._uuid_from == other._uuid_to and self._uuid_to == other._uuid_from))
 
 	def begin(self):
-		return self._from
+		return g._nodes_dict[self._uuid_from]
 
 	def end(self):
-		return self._to
+		return g._nodes_dict[self._uuid_to]
 
 	def reason(self):
 		return self._reason
@@ -205,36 +205,33 @@ class Graph:
 		self._ins = dict()
 		self._ghost_nodes = set()
 
-		nb_missing_node = 0
 		i = 0
 		for key in self._edges_dict:
 			if (i%100==0):
 				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
 			edge = self._edges_dict[key]
 
-			if not (edge._from in self._nodes_dict):
+			if not (edge._uuid_from in self._nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._from=} not in nodes !")
 				#self._nodes_dict[edge._from] = Node()
-				self._ghost_nodes.add(edge._from)
-				nb_missing_node += 1
-			if not (edge._to in self._nodes_dict):
+				self._ghost_nodes.add(edge._uuid_from)
+			if not (edge._uuid_to in self._nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._to=} not in nodes !")
 				#self._nodes_dict[edge._to] = Node()
-				self._ghost_nodes.add(edge._to)
-				nb_missing_node += 1
+				self._ghost_nodes.add(edge._uuid_to)
 
-			if not edge._from in self._outs:
-				self._outs[edge._from] = []
-			self._outs[edge._from].append(key)
+			if not edge._uuid_from in self._outs:
+				self._outs[edge._uuid_from] = []
+			self._outs[edge._uuid_from].append(key)
 
-			if not edge._to in self._ins:
-				self._ins[edge._to] = []
-			self._ins[edge._to].append(key)
+			if not edge._uuid_to in self._ins:
+				self._ins[edge._uuid_to] = []
+			self._ins[edge._uuid_to].append(key)
 
 			i += 1
 		print("\b\b\b\b\b\b\bDone   ")
 		self.nb_nodes = len(self._nodes_dict)
-		print(f"{nb_missing_node=}")
+		print(f"nb ghost nodes = {len(self._ghost_nodes)}")
 
 	def edges(self):
 		return list(self._edges_dict.values())
