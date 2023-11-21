@@ -152,7 +152,7 @@ with open(filepath_edges,"r") as f:
             continue   
 
         if not pto in nodes:
-            print(f"Error 2 : in edge {key} : From node {pto} does not exist")
+            print(f"Error 2 : in edge {key} : To node {pto} does not exist")
             continue
         
         nfrom = nodes[pfrom]
