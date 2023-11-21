@@ -35,7 +35,7 @@ SJK_NAME = "name"
 # Alternative Value
 AV_NANOS = 0
 AV_NAME = "NaN"
-AV_TYPE = "unknown"
+AV_TYPE = "ghost_node"
 
 
 class Timestamp:
@@ -110,6 +110,10 @@ class Node:
 		#self._type = raw_dict.get(SJK_TYPE)
 		self._seen = seen
 
+	def __bool__(self):
+		return not self._type==AV_TYPE
+
+
 	def first_seen(self):
 		return self._first_seen
 
@@ -141,10 +145,16 @@ class Edge:
 		return ((self._uuid_from == other._uuid_from and self._uuid_to == other._uuid_to) or (self._uuid_from == other._uuid_to and self._uuid_to == other._uuid_from))
 
 	def begin(self):
-		return g._nodes_dict[self._uuid_from]
+		if self._uuid_from in g._ghost_nodes:
+			return Node()
+		else:
+			return g._nodes_dict[self._uuid_from]
 
 	def end(self):
-		return g._nodes_dict[self._uuid_to]
+		if self._uuid_to in g._ghost_nodes:
+			return Node()
+		else:
+			return g._nodes_dict[self._uuid_to]
 
 	def reason(self):
 		return self._reason
@@ -241,7 +251,6 @@ class Graph:
 
 	def edges_from(self, node_key):
 		return [self._edges_dict[edge_key] for edge_key in self._outs[node_key] ]
-
 
 	def edges_to(self, node_key):
 		return [self._edges_dict[edge_key] for edge_key in self._ins[node_key] ]
