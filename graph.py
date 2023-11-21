@@ -51,6 +51,9 @@ class Timestamp:
 	def __str__(self):
 		return datetime.fromtimestamp(round(self._nanos/1e9)).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos%1e9)
 
+	def __bool__(self):
+		return not (self._nanos == 0)
+
 	def __eq__(self, other):
 		return self._nanos == other._nanos
 
@@ -83,6 +86,7 @@ class Timestamp:
 
 
 
+
 class Range:
 
 	def __init__(self, timestamp_a, timestamp_b):
@@ -105,6 +109,12 @@ class Node:
 		self._type = node_type
 		#self._type = raw_dict.get(SJK_TYPE)
 		self._seen = seen
+
+	def first_seen(self):
+		return self._first_seen
+
+	def last_seen(self):
+		return self._last_seen
 
 
 
@@ -139,7 +149,11 @@ class Edge:
 	def reason(self):
 		return self._reason
 
+	def timestamp(self):
+		return self._timestamp
+
 	def ntime(self):
+		print("deprecated")
 		return self._timestamp._nanos
 
 
