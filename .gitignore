@@ -13,6 +13,8 @@ l1.json
 l2.json
 3_bot.py
 
+# Baptiste ignored
+/env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
