@@ -1,0 +1,10 @@
+system.host - [CONNECT] -> system.identity - [HAS] -> system.identity - [START] -> system.process - [EXECUTE] -> file.resource - [HAS] -> trop de choses
+                                                                      - [STOP] -> system.process
+system.host - [HAS] -> network.ip
+system.workgroup - [CONTAINS] -> system.host - [LOGON] -> system.account - [USES] -> system.identity - [START] -> system.session - [EXECUTE] -> system.process - [EXECUTE] -> file.resource - [HAS] -> trop de choses
+                                                                                                     - [EXECUTE] -> system.process - ... (cf ligne au dessus)
+																									 
+																									 
+                              -> system.host - [LOGOFF] -> system.account - [USES] -> system.identity - [STOP] -> system.session - [STOP] -> system.process
+							                                                                          - [STOP] -> system.process
+system.process - [CONTAINS] -> text.base64 - [ENCODE] -> text.plain.utf16/text.plain/text (cas un peu particulier où la ligne de commande contient du texte en b64, jamais vu d'utilisation légitime de ça)
