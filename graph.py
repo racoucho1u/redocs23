@@ -91,6 +91,7 @@ class Timestamp:
 	def __ge__(self, other):
 		return self._nanos >= other._nanos
 
+
 	def estimated_cmp(self, node_or_edge):
 		if self < node_or_edge.estimated_first:
 			return -1
@@ -159,6 +160,13 @@ class Edge:
 			self.estimated_first = FIRST_TIMESTAMP
 			self.estimated_last = LAST_TIMESTAMP
 
+
+	def check_end_timestamps(self):
+		return self.begin().estimated_cmp(self._timestamp)
+
+	def check_begin_timestamps(self):
+		return self.end().estimated_cmp(self._timestamp)
+
 	def same_nodes(self, other):
 		return ((self._uuid_from == other._uuid_from and self._uuid_to == other._uuid_to) or (self._uuid_from == other._uuid_to and self._uuid_to == other._uuid_from))
 
@@ -187,7 +195,7 @@ class Graph:
 		self._raw_nodes_filename = raw_nodes_filename
 		self._raw_edges_filename = raw_edges_filename
 		self._backup_mode = backup_mode
-		self._backup_filename = "." + hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0003").encode()).hexdigest().zfill(40)[:16] + ".data"
+		self._backup_filename = "." + hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0004").encode()).hexdigest().zfill(40)[:16] + ".data"
 
 		if self._backup_mode:
 			print("backup mode enable")
