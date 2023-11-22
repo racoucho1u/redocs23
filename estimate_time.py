@@ -54,11 +54,11 @@ def guessTimeEdge(euuid,edges_estimated):
 		to_time_last = nto.estimated_last
 
 		#If the node before has a usable seen_first time
-		if (from_time_fst):
+		if (from_time_fst > g.edges_dict[euuid].estimated_first):
 			g.edges_dict[euuid].estimated_first = from_time_fst
 			changed = True
 		#Same thing as above but for the node after
-		if (to_time_last):
+		if (to_time_last < g.edges_dict[euuid].estimated_last):
 			g.edges_dict[euuid].estimated_last = to_time_last
 			changed = True
 
@@ -68,7 +68,7 @@ def guessTimeEdge(euuid,edges_estimated):
 
 	return(edges_estimated)
 
-def lauchAnalysis(mu):
+def lauchAnalysis(mu,gatherFnodes):
 
 	edges_estimated = []
 	nodes_estimated = []
@@ -89,9 +89,10 @@ def lauchAnalysis(mu):
 			ee.write(f"Node: {e[0]} | estimated_first: {e[1]} | estimated_last: {e[2]}")
 	print(len(edges_estimated))
 
-	with open("floating_nodes.log","a") as fn:
-		for n in floating_nodes:
-			fn.write(n+"\n")
+	if (gatherFnodes):
+		with open("floating_nodes.log","a") as fn:
+			for n in floating_nodes:
+				fn.write(n+"\n")
 
 	mu.append(g.mu())
 	print(mu)
@@ -101,8 +102,10 @@ def lauchAnalysis(mu):
 
 mu = [g.mu()]
 delta = mu
+gatherFnodes = True
 for i in range(3):
-	delta = lauchAnalysis(mu)
+	delta = lauchAnalysis(mu,gatherFnodes)
+	gatherFnodes = False
 
 
 g.save()
