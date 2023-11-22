@@ -10,6 +10,9 @@ fd5 = open("log/err005.log","w")
     
     
 for e in g.edges():
+    from_edge = True
+    edge_to = True
+    swap = True
     
     nfrom = e.begin()
     nto = e.end()
@@ -25,22 +28,25 @@ for e in g.edges():
     timestamp_from = nfrom.first_seen()
     timestamp_to = nto.last_seen()
     
-    if e.timestamp():
-        from_edge = (timestamp_from <= e.timestamp())
-        edge_to = (e.timestamp() <= timestamp_to)
+    if (e.timestamp()): 
         
-        if not from_edge:
-            fd3.write(f"Error 3 : in edge {e.uuid} : edge timestamp is inferior to From node {nfrom.uuid} timestamp\n")
-    
-        if not edge_to:
-            fd4.write(f"Error 4 : in edge {e.uuid} : edge timestamp is superior to To node {nto.uuid} timestamp\n")
+        if (timestamp_from):
+            from_edge = (timestamp_from <= e.timestamp())
+            
+        if (timestamp_to):
+            edge_to = (e.timestamp() <= timestamp_to)
         
     if (timestamp_from) and (timestamp_to):
         swap = (timestamp_from <= timestamp_to)
         
-        if not swap:
-            fd5.write(f"Error 5 : in edge {e.uuid} : To node {nto.uuid} timestamp is inferior to From node {nfrom.uuid} timestamp\n")
-                     
+    if not from_edge:
+        fd3.write(f"Error 3 : in edge {e.uuid} : edge timestamp is inferior to From node {nfrom.uuid} timestamp\n")
+
+    if not edge_to:
+        fd4.write(f"Error 4 : in edge {e.uuid} : edge timestamp is superior to To node {nto.uuid} timestamp\n")
+    
+    if not swap:
+        fd5.write(f"Error 5 : in edge {e.uuid} : To node {nto.uuid} timestamp is inferior to From node {nfrom.uuid} timestamp\n")  
             
 fd1.close()
 fd2.close()
