@@ -1,0 +1,19 @@
+491a492
+> Error 3 : in edge 520bf131-7f95-479b-957d-f723465cee15 : To node c6f6f1e7-9941-d158-4179-eef7b43e7be3 timestamp is inferior to From node 6ec08abf-29d5-d493-0c2a-c98a2744bc9e timestamp
+744a746
+> Error 3 : in edge 570fd6ed-5a3b-4905-a7e5-10f73791d533 : To node ef470b0d-df7a-66ba-5c80-83f11e3a4804 timestamp is inferior to From node 7a68688f-9c88-e3c9-1d1c-b23df69f6609 timestamp
+1429a1432
+> Error 3 : in edge 22cd0e58-eae0-49a8-9c6e-4335afbc4746 : To node e589ea2d-a429-34eb-3e53-887080d42f8d timestamp is inferior to From node bbf4d941-1b88-0a28-dd67-b2dcfc2c6d56 timestamp
+1490a1494
+> Error 3 : in edge 344df2e3-bd65-4517-91c9-ccc99cf16677 : To node 0710f049-7716-4730-cb77-43bb40b74962 timestamp is inferior to From node f7ed7a54-d43b-7c8e-e726-ad434fb63309 timestamp
+2291a2296
+> Error 3 : in edge cadf6870-4e9c-406c-823a-25e5b2a1ea9f : To node ecb482a4-a525-1b84-eb01-d3789378ba81 timestamp is inferior to From node 36ca9766-b13a-6ddc-1cd1-7539e5b7251a timestamp
+2882a2888,2889
+> Error 3 : in edge f0eb82cb-330c-4f77-b78f-0934c8ad5ca2 : To node bbf4d941-1b88-0a28-dd67-b2dcfc2c6d56 timestamp is inferior to From node 4cf326e5-66d0-8f84-3f5a-76455dfc9797 timestamp
+> Error 3 : in edge c0188c58-4871-4a79-8d47-b0a83bed9858 : To node 4cf326e5-66d0-8f84-3f5a-76455dfc9797 timestamp is inferior to From node 30165f1a-cc14-fa31-7ea2-622254332bd6 timestamp
+3544a3552
+> Error 3 : in edge 2df789e3-14c4-4571-8d06-c9b7c960b727 : To node 222c96fb-1b84-01e0-0bdc-e718d2b788f5 timestamp is inferior to From node fde4f75a-ecf3-eabe-8581-b2a140a7b425 timestamp
+3778a3787
+> Error 3 : in edge bb9d0b83-7b9d-4309-a64e-e1864d1fd522 : To node 95b41cb6-a0f7-1c02-216f-b870bbcbb4fc timestamp is inferior to From node e53296a7-c3c5-57ba-02b4-adce79b88275 timestamp
+4747a4757,4758
+> Error 3 : in edge 3717c345-d84d-4db3-a084-4ada13375505 : To node 68b6a4f7-e989-c305-f7f4-42599e064221 timestamp is inferior to From node 0963e6e1-59cd-3567-0941-c1917916762b timestamp
