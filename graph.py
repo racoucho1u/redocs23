@@ -55,20 +55,23 @@ class Timestamp:
 
 	def __init__(self, timestamp_dict=None):
 		if timestamp_dict is None:
-			self._nanos = 0
+			self._nanos = -1
 		else:
 			self._nanos = timestamp_dict.get(SJK_NANOS, AV_NANOS) + 1e9*timestamp_dict.get(SJK_SECONDS)
 			if self._nanos >= analyse_nanos:
-				self._nanos = 0
+				self._nanos = -1
 
 	def __hash__(self):
 		return hash(self._nanos)
 
 	def __str__(self):
-		return datetime.fromtimestamp(round(self._nanos/1e9)).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos%1e9)
+		if self:
+			return datetime.fromtimestamp(round(self._nanos/1e9)).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos%1e9)
+		else:
+			return "uninitialized timestamp"
 
 	def __bool__(self):
-		return not (self._nanos == 0)
+		return not (self._nanos == -1)
 
 	def __eq__(self, other):
 		return self._nanos == other._nanos
@@ -160,10 +163,10 @@ class Edge:
 		return ((self._uuid_from == other._uuid_from and self._uuid_to == other._uuid_to) or (self._uuid_from == other._uuid_to and self._uuid_to == other._uuid_from))
 
 	def begin(self):
-		return g._nodes_dict[self._uuid_from]
+		return g.nodes_dict[self._uuid_from]
 
 	def end(self):
-		return g._nodes_dict[self._uuid_to]
+		return g.nodes_dict[self._uuid_to]
 
 	def timestamp(self):
 		# return a timestamp object
@@ -184,7 +187,7 @@ class Graph:
 		self._raw_nodes_filename = raw_nodes_filename
 		self._raw_edges_filename = raw_edges_filename
 		self._backup_mode = backup_mode
-		self._backup_filename = "." + hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0002").encode()).hexdigest().zfill(40)[:16] + ".data"
+		self._backup_filename = "." + hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0003").encode()).hexdigest().zfill(40)[:16] + ".data"
 
 		if self._backup_mode:
 			print("backup mode enable")
@@ -232,7 +235,7 @@ class Graph:
 
 	def _load_nodes(self):
 		print("load nodes : xxx.xx%", end="")
-		self._nodes_dict = dict()
+		self.nodes_dict = dict()
 		with open(self._raw_nodes_filename, "r") as fd:
 			lines = fd.readlines()
 		self.nb_nodes = len(lines)
@@ -240,12 +243,12 @@ class Graph:
 			if (i%1000==0):
 				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_nodes*100), end="", flush=True)
 			n = json.loads(line)
-			self._nodes_dict[n[SJK_KEY]] = Node(n[SJK_KEY], Timestamp(n[SJK_TIMESTAMP][SJK_FIRSTSEEN]), Timestamp(n[SJK_TIMESTAMP][SJK_LASTSEEN]), n[SJK_TYPE], n[SJK_TIMESTAMP][SJK_SEEN])
+			self.nodes_dict[n[SJK_KEY]] = Node(n[SJK_KEY], Timestamp(n[SJK_TIMESTAMP][SJK_FIRSTSEEN]), Timestamp(n[SJK_TIMESTAMP][SJK_LASTSEEN]), n[SJK_TYPE], n[SJK_TIMESTAMP][SJK_SEEN])
 		print("\b\b\b\b\b\b\bDone   ")
 
 	def _load_edges(self):
 		print("load edges : xxx.xx%", end="")
-		self._edges_dict = dict()
+		self.edges_dict = dict()
 		with open(self._raw_edges_filename, "r") as fd:
 			lines = fd.readlines()
 		self.nb_edges = len(lines)
@@ -254,7 +257,7 @@ class Graph:
 				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="", flush=True)
 			e = json.loads(line)
 			#print(datetime.fromtimestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]["seconds"]).strftime("%d/%m/%Y %H:%M:%S"))
-			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_KEY], e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME), e[SJK_TIMESTAMP][SJK_SEEN])
+			self.edges_dict[e[SJK_KEY]] = Edge(e[SJK_KEY], e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME), e[SJK_TIMESTAMP][SJK_SEEN])
 		print("\b\b\b\b\b\b\bDone   ")
 
 	def _init_globals(self):
@@ -282,21 +285,21 @@ class Graph:
 		self._ghost_nodes = set()
 
 		i = 0
-		for key in self._edges_dict:
+		for key in self.edges_dict:
 			if (i%1000==0):
 				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="", flush=True)
-			edge = self._edges_dict[key]
+			edge = self.edges_dict[key]
 
-			if not (edge._uuid_from in self._nodes_dict):
+			if not (edge._uuid_from in self.nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._from=} not in nodes !")
-				#self._nodes_dict[edge._from] = Node()
+				#self.nodes_dict[edge._from] = Node()
 				self._ghost_nodes.add(edge._uuid_from)
-				self._nodes_dict[edge._uuid_from] = Node(edge._uuid_from)
-			if not (edge._uuid_to in self._nodes_dict):
+				self.nodes_dict[edge._uuid_from] = Node(edge._uuid_from)
+			if not (edge._uuid_to in self.nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._to=} not in nodes !")
-				#self._nodes_dict[edge._to] = Node()
+				#self.nodes_dict[edge._to] = Node()
 				self._ghost_nodes.add(edge._uuid_to)
-				self._nodes_dict[edge._uuid_to] = Node(edge._uuid_to)
+				self.nodes_dict[edge._uuid_to] = Node(edge._uuid_to)
 
 			if not edge._uuid_from in self._outs:
 				self._outs[edge._uuid_from] = []
@@ -308,20 +311,20 @@ class Graph:
 
 			i += 1
 		print("\b\b\b\b\b\b\bDone   ")
-		self.nb_nodes = len(self._nodes_dict)
+		self.nb_nodes = len(self.nodes_dict)
 		print(f"nb ghost nodes = {len(self._ghost_nodes)}")
 
 	def edges(self):
-		return list(self._edges_dict.values())
+		return list(self.edges_dict.values())
 
 	def nodes(self):
-		return list(self._nodes_dict.values())
+		return list(self.nodes_dict.values())
 
 	def edges_from(self, node_uuid):
-		return [self._edges_dict[edge_key] for edge_key in self._outs.get(node_uuid, []) ]
+		return [self.edges_dict[edge_key] for edge_key in self._outs.get(node_uuid, []) ]
 
 	def edges_to(self, node_uuid):
-		return [self._edges_dict[edge_key] for edge_key in self._ins.get(node_uuid, []) ]
+		return [self.edges_dict[edge_key] for edge_key in self._ins.get(node_uuid, []) ]
 
 	def mu(self):
 		# ammélioration significative du calcul de mu en l'actualisant en temps réel avec __setattr__ sur les estimated
