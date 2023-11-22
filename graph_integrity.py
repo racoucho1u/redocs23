@@ -1,5 +1,12 @@
 from datetime import datetime
 from graph import g
+
+
+fd1 = open("log/err001.log","w")
+fd2 = open("log/err002.log","w")
+fd3 = open("log/err003.log","w")
+fd4 = open("log/err004.log","w")
+fd5 = open("log/err005.log","w")
     
     
 for e in g.edges():
@@ -8,13 +15,11 @@ for e in g.edges():
     nto = e.end()
     
     if not nfrom:
-        print("Error 1")
-        #print(f"Error 1 : in edge {key} : From node {pfrom} does not exist")
+        fd1.write(f"Error 1 : in edge {e.uuid} : From node {nfrom.uuid} does not exist\n")
         continue   
 
     if not nto:
-        print("Error 2")
-        #print(f"Error 2 : in edge {key} : To node {pto} does not exist")
+        fd2.write(f"Error 2 : in edge {e.uuid} : To node {nto.uuid} does not exist\n")
         continue
         
     timestamp_from = nfrom.first_seen()
@@ -25,16 +30,20 @@ for e in g.edges():
         edge_to = (e.timestamp() <= timestamp_to)
         
         if not from_edge:
-            print(f"Error 3")
-            #print(f"Error 3 : in edge {key} : edge timestamp is inferior to From node {pfrom} timestamp")
+            fd3.write(f"Error 3 : in edge {e.uuid} : edge timestamp is inferior to From node {nfrom.uuid} timestamp\n")
     
         if not edge_to:
-            print("Error 4")
-            #print(f"Error 4 : in edge {key} : edge timestamp is superior to To node {pto} timestamp")
+            fd4.write(f"Error 4 : in edge {e.uuid} : edge timestamp is superior to To node {nto.uuid} timestamp\n")
         
     if (timestamp_from) and (timestamp_to):
         swap = (timestamp_from <= timestamp_to)
         
         if not swap:
-            print("Error 5")
-            #print(f"Error 5 : in edge {key} : To node {pto} timestamp is inferior to From node {pfrom} timestamp")
+            fd5.write(f"Error 5 : in edge {e.uuid} : To node {nto.uuid} timestamp is inferior to From node {nfrom.uuid} timestamp\n")
+                     
+            
+fd1.close()
+fd2.close()
+fd3.close()
+fd4.close()
+fd5.close()
