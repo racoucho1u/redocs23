@@ -100,7 +100,7 @@ class Timestamp:
 
 class Node:
 
-	def __init__(self, uuid="00000000-0000-0000-0000-000000000000", first_seen=None, last_seen=None, node_type=AV_TYPE, seen = 0):
+	def __init__(self, uuid, first_seen=None, last_seen=None, node_type=AV_TYPE, seen = 0):
 		self.uuid = uuid
 		self._first_seen = first_seen
 		self._last_seen = last_seen
@@ -160,16 +160,10 @@ class Edge:
 		return ((self._uuid_from == other._uuid_from and self._uuid_to == other._uuid_to) or (self._uuid_from == other._uuid_to and self._uuid_to == other._uuid_from))
 
 	def begin(self):
-		if self._uuid_from in g._ghost_nodes:
-			return Node()
-		else:
-			return g._nodes_dict[self._uuid_from]
+		return g._nodes_dict[self._uuid_from]
 
 	def end(self):
-		if self._uuid_to in g._ghost_nodes:
-			return Node()
-		else:
-			return g._nodes_dict[self._uuid_to]
+		return g._nodes_dict[self._uuid_to]
 
 	def timestamp(self):
 		# return a timestamp object
@@ -190,13 +184,11 @@ class Graph:
 		self._raw_nodes_filename = raw_nodes_filename
 		self._raw_edges_filename = raw_edges_filename
 		self._backup_mode = backup_mode
-		self._backup_filename = hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0001").encode()).hexdigest().zfill(40)[:16] + ".data"
+		self._backup_filename = "." + hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0002").encode()).hexdigest().zfill(40)[:16] + ".data"
 
 		if self._backup_mode:
 			print("backup mode enable")
 			print("remember to save the graph before closing : using g.save()")
-			#print("\tuse g.save() to save your current graph")
-			#print("\tuse g.load() to load the backup graph")
 			if os.path.exists(self._backup_filename):
 				self.load()
 				return
@@ -299,10 +291,12 @@ class Graph:
 				#print(f"edge.key='{key}' -> {edge._from=} not in nodes !")
 				#self._nodes_dict[edge._from] = Node()
 				self._ghost_nodes.add(edge._uuid_from)
+				self._nodes_dict[edge._uuid_from] = Node(edge._uuid_from)
 			if not (edge._uuid_to in self._nodes_dict):
 				#print(f"edge.key='{key}' -> {edge._to=} not in nodes !")
 				#self._nodes_dict[edge._to] = Node()
 				self._ghost_nodes.add(edge._uuid_to)
+				self._nodes_dict[edge._uuid_to] = Node(edge._uuid_to)
 
 			if not edge._uuid_from in self._outs:
 				self._outs[edge._uuid_from] = []
@@ -311,7 +305,6 @@ class Graph:
 			if not edge._uuid_to in self._ins:
 				self._ins[edge._uuid_to] = []
 			self._ins[edge._uuid_to].append(key)
-
 
 			i += 1
 		print("\b\b\b\b\b\b\bDone   ")
@@ -332,7 +325,7 @@ class Graph:
 
 	def mu(self):
 		# ammélioration significative du calcul de mu en l'actualisant en temps réel avec __setattr__ sur les estimated
-		# construire MU en gllobal initiée par self._init_globals()
+		# construire MU en global initiée par self._init_globals()
 		# finalement, peut etre pas necessaire au vu de la fréquence d'appel
 		rop = 0
 		for e in self.edges():
