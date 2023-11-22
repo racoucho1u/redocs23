@@ -42,5 +42,5 @@ def node_and_emission(reason_edge, type_node, path_file):
  
  
  # examples :       
-# activity_hour(5,22,"log/sample_night.log")
+activity_hour(5,22,"log/sample_night.log")
 # node_and_emission("CONNECT","document.","log/sample_file_co.log")

@@ -1,6 +1,16 @@
 from graph import g
 
 def integrity():
+    """_summary_
+    produce 7 log files :
+    Error 1 : the parent node of the edge doesn't exist in the jsonl
+    Error 2 : the child node of the edge doesn't exist in the jsonl
+    Error 3 : the parent node et the child node of the edge are swap
+    Error 4 : the edge is created before the parent node existence
+    Error 5 : the edge is created after the parent node existence
+    Error 6 : the edge is created before the child node existence
+    Error 7 : the edge is created after the child node existence
+    """
 
     fd1 = open("log/err001.log","w")
     fd2 = open("log/err002.log","w")
