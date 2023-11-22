@@ -64,6 +64,10 @@ class Timestamp:
 				self._nanos = -1
 
 	def datetime(self):
+		"""
+		retourne un objet datetime en fonction de la timezone
+		utilisee pour acceder a .hour .month ...
+		"""
 		return datetime.fromtimestamp(round(self._nanos/1e9), tz=TIMEZONE)
 
 
@@ -71,12 +75,19 @@ class Timestamp:
 		return hash(self._nanos)
 
 	def __str__(self):
+		"""
+		human readable format
+		"""
 		if self:
-			return datetime.fromtimestamp(round(self._nanos/1e9), tz=TIMEZONE).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos%1e9)
+			return datetime.fromtimestamp(round(self._nanos/1e9), tz=TIMEZONE).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(int(self._nanos%1e9))
 		else:
 			return "uninitialized timestamp"
 
 	def __bool__(self):
+		"""
+		permet la syntaxe "if timestamp:"
+		retourne faux si le timestamp est non initialise, ie. pas de timestamp dans le dataset ou tiemstamp>analyse_time
+		"""
 		return not (self._nanos == -1)
 
 	def __eq__(self, other):
@@ -99,6 +110,14 @@ class Timestamp:
 
 
 	def estimated_cmp(self, node_or_edge):
+		"""
+		retourne:
+		-1 si le timestamp est avant le timeRange de node ou edge en argument
+		 0 si le timestamp est dans le timeRange de node ou edge en argument (inclusivement)
+		 1 si le timestamp est apres le timeRange de node ou edge en argument
+
+		utilisee par Edge.check_begin_timestamps et Edge.check_end_timestamps
+		"""
 		if self < node_or_edge.estimated_first:
 			return -1
 		elif self > node_or_edge.estimated_last:
@@ -128,17 +147,28 @@ class Node:
 			self.estimated_last = LAST_TIMESTAMP
 
 	def __bool__(self):
+		"""
+		permet la syntaxe "if node:"
+		retourne faux si le node est un ghost node
+		"""
 		return not self.type==AV_TYPE
 
 	def first_seen(self):
-		# return a timestamp object
+		"""
+		retourne le timestamp firstSeen
+		"""
 		return self._first_seen
 
 	def last_seen(self):
-		# return a timestamp object
+		"""
+		retourne le timestamp lastSeen
+		"""
 		return self._last_seen
 
 	def estimated_cmp(self, timestamp):
+		"""
+		voir Timstamp.estimated_cmp()
+		"""
 		return timestamp.estimated_cmp(self)
 
 	def mu(self):
@@ -166,27 +196,53 @@ class Edge:
 			self.estimated_first = FIRST_TIMESTAMP
 			self.estimated_last = LAST_TIMESTAMP
 
-
-	def check_end_timestamps(self):
-		return self.begin().estimated_cmp(self._timestamp)
-
 	def check_begin_timestamps(self):
+		"""
+		retourne:
+		-1 si le time de edge est avant le timeRange de son node de depart
+		 0 si le time de edge est dans le timeRange de son node de depart (inclusivement)
+		 1 si le time de edge est apres le timeRange de son node de depart
+		"""
 		return self.end().estimated_cmp(self._timestamp)
 
+	def check_end_timestamps(self):
+		"""
+		retourne:
+		-1 si le time de edge est avant le timeRange de son node d'arrivee
+		 0 si le time de edge est dans le timeRange de son node d'arrivee (inclusivement)
+		 1 si le time de edge est apres le timeRange de son node d'arrivee
+		"""
+		return self.begin().estimated_cmp(self._timestamp)
+
+
 	def same_nodes(self, other):
+		"""
+		verifie si edge other a les meme node de départ et d'arriver (dans le meme sens ou en sens oppose)
+		"""
 		return ((self._uuid_from == other._uuid_from and self._uuid_to == other._uuid_to) or (self._uuid_from == other._uuid_to and self._uuid_to == other._uuid_from))
 
 	def begin(self):
+		"""
+		retourne le node de depart
+		"""
 		return g.nodes_dict[self._uuid_from]
 
 	def end(self):
+		"""
+		retourne le node d'arrivee
+		"""
 		return g.nodes_dict[self._uuid_to]
 
 	def timestamp(self):
-		# return a timestamp object
+		"""
+		retourne le timestamp
+		"""
 		return self._timestamp
 
 	def estimated_cmp(self, timestamp):
+		"""
+		voir Timstamp.estimated_cmp()
+		"""
 		return timestamp.estimated_cmp(self)
 
 	def mu(self):
@@ -198,7 +254,7 @@ class Edge:
 class Graph:
 	"""
 	objet graph
-	peut charger un graph depuis les fichier json (raw data), ou depuis un fichier data si il existe un graph déja sauvegardé
+	peut charger un graph depuis les fichier json (raw data), ou depuis un fichier data s'il existe un graph deja sauvegarde
 	"""
 
 	def __init__(self, raw_nodes_filename, raw_edges_filename, backup_mode=True):
@@ -224,13 +280,10 @@ class Graph:
 			n._build()
 		if self._backup_mode:
 			self.save()
-		#print("mu={:25.0f}".format((LAST_TIMESTAMP._nanos - FIRST_TIMESTAMP._nanos)*(len(self.edges())+len(self.nodes()))))
-		#print("mu={:25.0f}".format(self.mu()))
-
 
 	def load(self):
 		"""
-		méthode de chargement depuis un fichier de sauvegarde
+		methode de chargement depuis un fichier de sauvegarde
 		"""
 
 		if not self._backup_mode:
@@ -244,10 +297,9 @@ class Graph:
 		self.__dict__.update(tmp_dict)
 		print("graph loaded !")
 
-
 	def save(self):
 		"""
-		methode de sauvegarde dans un fichier
+		methode de sauvegarde dans un fichier .==somehash==.data
 		"""
 
 		if not self._backup_mode:
@@ -260,10 +312,9 @@ class Graph:
 		f.close()
 		print("graph saved !")
 
-
 	def _load_nodes(self):
 		"""
-		chargement du json de node
+		chargement du json de nodes
 		initialisation du dictionnaire de node
 		"""
 		print("load nodes : xxx.xx%", end="")
@@ -280,7 +331,7 @@ class Graph:
 
 	def _load_edges(self):
 		"""
-		chargement du json de edge
+		chargement du json de edges
 		initialisation du dictionnaire de edge
 		"""
 		print("load edges : xxx.xx%", end="")
@@ -318,6 +369,13 @@ class Graph:
 		FIRST_TIMESTAMP = min(timestamps)
 
 	def _build(self):
+		"""
+		derniere methode d'initialisation
+		construction des dictionnaires _outs et _ins
+		detection des ghost nodes
+		actualisation de nb_nodes en fonction des ghost_nodes
+		"""
+
 		print("build graph : xxx.xx%", end="")
 
 		self._outs = dict()
@@ -355,21 +413,37 @@ class Graph:
 		print(f"nb ghost nodes = {len(self._ghost_nodes)}")
 
 	def edges(self):
+		"""
+		retourne la liste des edges du graph
+		"""
 		return list(self.edges_dict.values())
 
 	def nodes(self):
+		"""
+		retourne la liste des nodes du graph
+		"""
 		return list(self.nodes_dict.values())
 
 	def edges_from(self, node_uuid):
+		"""
+		retourne la liste des edges emisent par le node node_uuid
+		"""
 		return [self.edges_dict[edge_key] for edge_key in self._outs.get(node_uuid, []) ]
 
 	def edges_to(self, node_uuid):
+		"""
+		retourne la liste des edges a destination du node node_uuid
+		"""
 		return [self.edges_dict[edge_key] for edge_key in self._ins.get(node_uuid, []) ]
 
 	def mu(self):
-		# ammélioration significative du calcul de mu en l'actualisant en temps réel avec __setattr__ sur les estimated
+		"""
+		mesure de l'incompletude temporelle du graph
+		ie. somme de l'incompletude de tous les noeud et de tous les edges
+		"""
+		# ammélioration significative du calcul de mu en l'actualisant en temps réel avec __setattr__ ( callback sur les estimated_* )
 		# construire MU en global initiée par self._init_globals()
-		# finalement, peut etre pas necessaire au vu de la fréquence d'appel
+		# finalement, peut etre pas necessaire aux vues de la fréquence d'appel.
 		rop = 0
 		for e in self.edges():
 			rop += e.mu()
