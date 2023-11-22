@@ -1,4 +1,5 @@
 from graph import g
+import csv
 
 
 def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
@@ -15,9 +16,16 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 
 		allFst = [e.estimated_first for e in eto+efrom]
 		if (len(allFst)>0):
+
+			mini = min(allFst)
+
+			#Track wether the node will be changed
+			if (mini != g.nodes_dict[nuuid].estimated_first):
+				changed = True
+			
 			#Getting the first possible call to the node (min first_seen des edges qui arrivent)
-			g.nodes_dict[nuuid].estimated_first = min(allFst)
-			changed = True
+			g.nodes_dict[nuuid].estimated_first = mini
+
 		else:
 			floating_nodes.append(nuuid)
 		
@@ -26,9 +34,16 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 		
 		allLast = [e.estimated_last for e in eto+efrom]
 		if (len(allLast)>0):
-			#Getting the first possible call to the node (min first_seen des edges qui arrivent)
-			g.nodes_dict[nuuid].estimated_last = max(allLast)
-			changed = True
+
+			maxi = max(allLast)
+
+			#Track wether the node will be changed
+			if (maxi != g.nodes_dict[nuuid].estimated_last):
+				changed = True
+
+			#Getting the flast possible call from the node (max last_seen des edges qui arrivent)
+			g.nodes_dict[nuuid].estimated_last = maxi
+
 		else:
 			floating_nodes.append(nuuid)
 
@@ -52,6 +67,8 @@ def guessTimeEdge(euuid,edges_estimated):
 
 		from_time_fst = nfrom.estimated_first
 		to_time_last = nto.estimated_last
+		from_uuid = nfrom.uuid
+		to_uuid = nto.uuid
 
 		#If the node before has a usable seen_first time
 		if (from_time_fst > g.edges_dict[euuid].estimated_first):
@@ -61,6 +78,7 @@ def guessTimeEdge(euuid,edges_estimated):
 		if (to_time_last < g.edges_dict[euuid].estimated_last):
 			g.edges_dict[euuid].estimated_last = to_time_last
 			changed = True
+			
 
 	#Writing in the log file
 	if (changed):
@@ -79,20 +97,34 @@ def lauchAnalysis(mu,gatherFnodes):
 	for nuuid in g.nodes_dict:
 		(nodes_estimated,floating_nodes) = guessTimeNode(nuuid,nodes_estimated,floating_nodes)
 
-	with open("nodes_estimated.log","a") as ne:
-		for n in nodes_estimated:
-			ne.write(f"Node: {n[0]} | estimated_first: {n[1]} | estimated_last: {n[2]}")
-	print(len(nodes_estimated))
+	#with open("nodes_estimated.log","a") as ne:
+	#	for n in nodes_estimated:
+	#		ne.write(f"Node: {n[0]} | estimated_first: {n[1]} | estimated_last: {n[2]}")
+	#print(f"Changed nodes: {len(nodes_estimated)}")
 
-	with open("edges_estimated.log","a") as ee:
+	#with open("edges_estimated.log","a") as ee:
+	#	for e in edges_estimated:
+	#		ee.write(f"Edge: {e[0]} | estimated_first: {e[1]} | estimated_last: {e[2]}")
+	#print(f"Changed edges: {len(edges_estimated)}")
+
+	with open("nodes_estimated.csv","a") as ne:
+		csv_w = csv.writer(ne, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+		csv_w.writerow([f"node.uuid", f"node.estimated_first", f"node.estimated_last"])
+		for n in nodes_estimated:
+			csv_w.writerow([f"{n[0]}", f"{n[1]}", f"{n[2]}"])
+
+	with open("edges_estimated.csv","a") as ee:
+		csv_w = csv.writer(ee, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+		csv_w.writerow([f"edge.uuid", f"edge.estimated_first", f"edge.estimated_last"])
 		for e in edges_estimated:
-			ee.write(f"Node: {e[0]} | estimated_first: {e[1]} | estimated_last: {e[2]}")
-	print(len(edges_estimated))
+			csv_w.writerow([f"{e[0]}", f"{e[1]}", f"{e[2]}"])
 
 	if (gatherFnodes):
 		with open("floating_nodes.log","a") as fn:
 			for n in floating_nodes:
 				fn.write(n+"\n")
+
+	print(len(changed_nodes))
 
 	mu.append(g.mu())
 	print(mu)
@@ -101,9 +133,10 @@ def lauchAnalysis(mu,gatherFnodes):
 	return(delta)
 
 mu = [g.mu()]
-delta = mu
+delta = mu[0]
 gatherFnodes = True
-for i in range(3):
+changed_nodes = []
+while (delta > 0):
 	delta = lauchAnalysis(mu,gatherFnodes)
 	gatherFnodes = False
 
