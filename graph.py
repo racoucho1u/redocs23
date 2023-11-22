@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import json
 import os
 import pickle
@@ -15,10 +15,12 @@ INFO  = " \033[32m[INFO]\033[0m : "
 WARN  = " \033[33m[WARN]\033[0m : "
 ERROR = "\033[31m[ERROR]\033[0m : "
 
+# Timezone for chronological analysis
+# hour=offset
+TIMEZONE = timezone(timedelta(hours=0)) # (UTC−00:00)
 
-
-# Analyse Timestamp
-analyse_datetime = "2023-01-01T00:00:00"
+# Analysis timestamp
+analyse_datetime = "2023-01-01T00:00:00+00:00" # timezone analyse can be different
 analyse_nanos = int(datetime.fromisoformat(analyse_datetime).timestamp()*1e9)
 
 
@@ -61,12 +63,16 @@ class Timestamp:
 			if self._nanos >= analyse_nanos:
 				self._nanos = -1
 
+	def datetime(self):
+		return datetime.fromtimestamp(round(self._nanos/1e9), tz=TIMEZONE)
+
+
 	def __hash__(self):
 		return hash(self._nanos)
 
 	def __str__(self):
 		if self:
-			return datetime.fromtimestamp(round(self._nanos/1e9)).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos%1e9)
+			return datetime.fromtimestamp(round(self._nanos/1e9), tz=TIMEZONE).strftime("%d/%m/%Y %H:%M:%S") + ".{:09}".format(self._nanos%1e9)
 		else:
 			return "uninitialized timestamp"
 
@@ -190,6 +196,10 @@ class Edge:
 
 
 class Graph:
+	"""
+	objet graph
+	peut charger un graph depuis les fichier json (raw data), ou depuis un fichier data si il existe un graph déja sauvegardé
+	"""
 
 	def __init__(self, raw_nodes_filename, raw_edges_filename, backup_mode=True):
 		self._raw_nodes_filename = raw_nodes_filename
@@ -219,9 +229,14 @@ class Graph:
 
 
 	def load(self):
+		"""
+		méthode de chargement depuis un fichier de sauvegarde
+		"""
+
 		if not self._backup_mode:
 			print("backup mode disable")
 			return
+
 		print("graph loading ...")
 		f = open(self._backup_filename, 'rb')
 		tmp_dict = pickle.load(f)
@@ -231,9 +246,14 @@ class Graph:
 
 
 	def save(self):
+		"""
+		methode de sauvegarde dans un fichier
+		"""
+
 		if not self._backup_mode:
 			print("backup mode disable")
 			return
+
 		print("graph saving ...")
 		f = open(self._backup_filename, 'wb')
 		pickle.dump(self.__dict__, f, 2)
@@ -242,6 +262,10 @@ class Graph:
 
 
 	def _load_nodes(self):
+		"""
+		chargement du json de node
+		initialisation du dictionnaire de node
+		"""
 		print("load nodes : xxx.xx%", end="")
 		self.nodes_dict = dict()
 		with open(self._raw_nodes_filename, "r") as fd:
@@ -255,6 +279,10 @@ class Graph:
 		print("\b\b\b\b\b\b\bDone   ")
 
 	def _load_edges(self):
+		"""
+		chargement du json de edge
+		initialisation du dictionnaire de edge
+		"""
 		print("load edges : xxx.xx%", end="")
 		self.edges_dict = dict()
 		with open(self._raw_edges_filename, "r") as fd:
@@ -269,8 +297,12 @@ class Graph:
 		print("\b\b\b\b\b\b\bDone   ")
 
 	def _init_globals(self):
-		global LAST_TIMESTAMP
-		global FIRST_TIMESTAMP
+		"""
+		initialisation des constant globales
+		"""
+
+		global LAST_TIMESTAMP  # dernier timestamp du dataset (hors analyse)
+		global FIRST_TIMESTAMP # premier timestamp du dataset
 
 		timestamps = set()
 		for node in self.nodes():
