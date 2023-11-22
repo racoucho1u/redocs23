@@ -1,11 +1,14 @@
 from datetime import datetime
 import json
-
+import os
+import pickle
+import hashlib
 
 
 
 nodes_filename = "bare_effects_filtered.jsonl"
 edges_filename = "bare_edge_effects_filtered.jsonl"
+
 
 
 INFO  = " \033[32m[INFO]\033[0m : "
@@ -183,10 +186,20 @@ class Edge:
 
 class Graph:
 
-	def __init__(self, raw_nodes_filename, raw_edges_filename):
+	def __init__(self, raw_nodes_filename, raw_edges_filename, backup_mode=True):
 		self._raw_nodes_filename = raw_nodes_filename
 		self._raw_edges_filename = raw_edges_filename
+		self._backup_mode = backup_mode
+		self._backup_filename = hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0001").encode()).hexdigest().zfill(40)[:16] + ".data"
 
+		if self._backup_mode:
+			print("backup mode enable")
+			print("remember to save the graph before closing : using g.save()")
+			#print("\tuse g.save() to save your current graph")
+			#print("\tuse g.load() to load the backup graph")
+			if os.path.exists(self._backup_filename):
+				self.load()
+				return
 
 		self._load_nodes()
 		self._load_edges()
@@ -196,8 +209,33 @@ class Graph:
 			e._build()
 		for n in self.nodes():
 			n._build()
-		print("mu={:25.0f}".format((LAST_TIMESTAMP._nanos - FIRST_TIMESTAMP._nanos)*(len(self.edges())+len(self.nodes()))))
-		print("mu={:25.0f}".format(self.mu()))
+		if self._backup_mode:
+			self.save()
+		#print("mu={:25.0f}".format((LAST_TIMESTAMP._nanos - FIRST_TIMESTAMP._nanos)*(len(self.edges())+len(self.nodes()))))
+		#print("mu={:25.0f}".format(self.mu()))
+
+
+	def load(self):
+		if not self._backup_mode:
+			print("backup mode disable")
+			return
+		print("graph loading ...")
+		f = open(self._backup_filename, 'rb')
+		tmp_dict = pickle.load(f)
+		f.close()          
+		self.__dict__.update(tmp_dict)
+		print("graph loaded !")
+
+
+	def save(self):
+		if not self._backup_mode:
+			print("backup mode disable")
+			return
+		print("graph saving ...")
+		f = open(self._backup_filename, 'wb')
+		pickle.dump(self.__dict__, f, 2)
+		f.close()
+		print("graph saved !")
 
 
 	def _load_nodes(self):
@@ -207,8 +245,8 @@ class Graph:
 			lines = fd.readlines()
 		self.nb_nodes = len(lines)
 		for i, line in enumerate(lines):
-			if (i%100==0):
-				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_nodes*100), end="")
+			if (i%1000==0):
+				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_nodes*100), end="", flush=True)
 			n = json.loads(line)
 			self._nodes_dict[n[SJK_KEY]] = Node(n[SJK_KEY], Timestamp(n[SJK_TIMESTAMP][SJK_FIRSTSEEN]), Timestamp(n[SJK_TIMESTAMP][SJK_LASTSEEN]), n[SJK_TYPE], n[SJK_TIMESTAMP][SJK_SEEN])
 		print("\b\b\b\b\b\b\bDone   ")
@@ -220,8 +258,8 @@ class Graph:
 			lines = fd.readlines()
 		self.nb_edges = len(lines)
 		for i, line in enumerate(lines):
-			if (i%100==0):
-				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
+			if (i%1000==0):
+				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="", flush=True)
 			e = json.loads(line)
 			#print(datetime.fromtimestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]["seconds"]).strftime("%d/%m/%Y %H:%M:%S"))
 			self._edges_dict[e[SJK_KEY]] = Edge(e[SJK_KEY], e[SJK_FROM], e[SJK_TO], Timestamp(e[SJK_TIMESTAMP][SJK_FIRSTSEEN]), e[SJK_REASON], e.get(SJK_ENTITY, dict()).get(SJK_NAME, AV_NAME), e[SJK_TIMESTAMP][SJK_SEEN])
@@ -253,8 +291,8 @@ class Graph:
 
 		i = 0
 		for key in self._edges_dict:
-			if (i%100==0):
-				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="")
+			if (i%1000==0):
+				print("\b\b\b\b\b\b\b{:6.2f}%".format(i/self.nb_edges*100), end="", flush=True)
 			edge = self._edges_dict[key]
 
 			if not (edge._uuid_from in self._nodes_dict):
