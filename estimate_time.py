@@ -74,11 +74,11 @@ def guessTimeEdge(euuid,edges_estimated):
 	to_uuid = nto.uuid
 
 	#If the node before has a usable seen_first time, and it is more precise than the current time, change it
-	if (from_time_fst > g.edges_dict[euuid].estimated_first):
+	if (from_time_fst < g.edges_dict[euuid].estimated_first):
 		g.edges_dict[euuid].estimated_first = from_time_fst
 		changed = True
 	#Same thing as above but for the node after
-	if (to_time_last < g.edges_dict[euuid].estimated_last):
+	if (to_time_last > g.edges_dict[euuid].estimated_last):
 		g.edges_dict[euuid].estimated_last = to_time_last
 		changed = True
 			
