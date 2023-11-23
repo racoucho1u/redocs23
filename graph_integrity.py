@@ -1,14 +1,24 @@
 from graph import g
 
-def integrity():
+def integrity(path_template):
+    """_summary_
+    produce 7 log files :
+    Error 1 : the parent node of the edge doesn't exist in the jsonl
+    Error 2 : the child node of the edge doesn't exist in the jsonl
+    Error 3 : the parent node et the child node of the edge are swap
+    Error 4 : the edge is created before the parent node existence
+    Error 5 : the edge is created after the parent node existence
+    Error 6 : the edge is created before the child node existence
+    Error 7 : the edge is created after the child node existence
+    """
 
-    fd1 = open("log/err001.log","w")
-    fd2 = open("log/err002.log","w")
-    fd3 = open("log/err003.log","w")
-    fd4 = open("log/err004.log","w")
-    fd5 = open("log/err005.log","w")
-    fd6 = open("log/err006.log","w")
-    fd7 = open("log/err007.log","w")
+    fd1 = open(path_template +"001.log","w")
+    fd2 = open(path_template +"002.log","w")
+    fd3 = open(path_template +"003.log","w")
+    fd4 = open(path_template +"004.log","w")
+    fd5 = open(path_template +"005.log","w")
+    fd6 = open(path_template +"006.log","w")
+    fd7 = open(path_template +"007.log","w")
         
         
     for e in g.edges():
@@ -55,4 +65,4 @@ def integrity():
     fd6.close()
     fd7.close()
     
-#integrity()
+integrity("log/estimate_err")
