@@ -12,47 +12,45 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 	efrom = g.edges_from(nuuid)
 
 	#If the first_seen is not usable
-	if (not g.nodes_dict[nuuid].first_seen()):
+	#if (not g.nodes_dict[nuuid].first_seen()):
 
-		#Get the first appearences of the edges connected to the node
-		allFst = []
-		for e in eto+efrom:
-			if e.estimated_first_bool:
-				allFst.append(e.estimated_first)
-		if (len(allFst)>0):
+	#Get the first appearences of the edges connected to the node
+	allFst = []
+	for e in eto+efrom:
+		if e.estimated_first_bool or e.timestamp():
+			allFst.append(e.estimated_first)
 
-			mini = min(allFst)	#Get the earliest of all
+	if (len(allFst)>0 and not g.nodes_dict[nuuid].first_seen()):
 
-			#Track wether the node will be changed
-			if (mini < g.nodes_dict[nuuid].estimated_first):
-				changed = True
-			
-				#Getting the first possible call to the node (min first_seen des edges qui arrivent)
-				g.nodes_dict[nuuid].estimated_first = mini
-				g.nodes_dict[nuuid].estimated_first_bool = True
+		mini = min(allFst)	#Get the earliest of all
+		changed = True
+		
+		#Getting the first possible call to the node (min first_seen des edges qui arrivent)
+		g.nodes_dict[nuuid].estimated_first = mini
+		g.nodes_dict[nuuid].estimated_first_bool = True
 
 
 	else:
 		floating_nodes.append(nuuid)
 		
 	#Same as above for the after
-	if (not g.nodes_dict[nuuid].last_seen()):
+	#if (not g.nodes_dict[nuuid].last_seen()):
 		
-		allLast = []
-		for e in eto+efrom:
-			if e.estimated_last_bool:
-				allLast.append(e.estimated_last)
-		if (len(allLast)>0):
+	allLast = []
+	for e in eto+efrom:
+		if e.estimated_last_bool or e.timestamp():
+			allLast.append(e.estimated_last)
+	
+	if (len(allLast)>0 and not g.nodes_dict[nuuid].last_seen()):
 
-			maxi = max(allLast)
+		maxi = max(allLast)
 
-			#Track wether the node will be changed
-			if (maxi > g.nodes_dict[nuuid].estimated_last):
-				changed = True
+		#Track wether the node will be changed
+		changed = True
 
-				#Getting the flast possible call from the node (max last_seen des edges qui arrivent)
-				g.nodes_dict[nuuid].estimated_last = maxi
-				g.nodes_dict[nuuid].estimated_last_bool = True
+		#Getting the flast possible call from the node (max last_seen des edges qui arrivent)
+		g.nodes_dict[nuuid].estimated_last = maxi
+		g.nodes_dict[nuuid].estimated_last_bool = True
 
 	else:
 		floating_nodes.append(nuuid)
@@ -70,21 +68,26 @@ def guessTimeEdge(euuid,edges_estimated):
 	etime = g.edges_dict[euuid].timestamp()
 
 	#If we need to make a guess because the time of the edge cannot be used
-	if (not etime):
+	#if (not etime):
 
-		#Estimated time is by delault the time of the node if it exitst (and is legit ie. not the time of analysis)
-		#otherwise it will be the first (respectively last) time available in the graph (that is not the analysis time)
-		from_time_fst = nfrom.estimated_first
-		to_time_last = nto.estimated_last
-		from_uuid = nfrom.uuid
-		to_uuid = nto.uuid
+	#Estimated time is by delault the time of the node if it exitst (and is legit ie. not the time of analysis)
+	#otherwise it will be the first (respectively last) time available in the graph (that is not the analysis time)
+	from_time_fst = nfrom.estimated_first
+	to_time_last = nto.estimated_last
+	from_uuid = nfrom.uuid
+	to_uuid = nto.uuid
 
-		#If the node before has a usable seen_first time, and it is more precise than the current time, change it
-		if (from_time_fst < g.edges_dict[euuid].estimated_first and (nfrom.estimated_first_bool or nfrom.first_seen())):
+	#If the node before has a usable seen_first time, and it is more precise than the current time, change it
+	if (nfrom.estimated_first_bool or nfrom.first_seen()):
+		if (etime and g.edges_dict[euuid].check_begin_timestamps()!=0):
 			g.edges_dict[euuid].estimated_first = from_time_fst
 			g.edges_dict[euuid].estimated_first_bool = True
-		#Same thing as above but for the node after
-		if (to_time_last > g.edges_dict[euuid].estimated_last and (nto.estimated_last_bool or nfrom.last_seen())):
+		else:
+			g.edges_dict[euuid].estimated_first = from_time_fst
+			g.edges_dict[euuid].estimated_first_bool = True
+	#Same thing as above but for the node after
+	if (nto.estimated_last_bool or nfrom.last_seen()):
+		if (etime and g.edges_dict[euuid].check_end_timestamps()!=0):
 			g.edges_dict[euuid].estimated_last = to_time_last
 			g.edges_dict[euuid].estimated_last_bool = True
 			
