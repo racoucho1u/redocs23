@@ -2,6 +2,10 @@ from graph import g
 
 def integrity(path_template):
     """_summary_
+    
+    Args:
+        path_template : prefix name of the future log
+    
     produce 7 log files :
     Error 1 : the parent node of the edge doesn't exist in the jsonl
     Error 2 : the child node of the edge doesn't exist in the jsonl
@@ -49,10 +53,12 @@ def integrity(path_template):
             fd4.write(f"Error 4 : in edge {e.uuid} : edge is created before From node {nfrom.uuid} existence\n")
             
         if from_edge == 1:
-            fd5.write(f"Error 5 : in edge {e.uuid} : edge is created after From node {nfrom.uuid} existence\n")
+            if swap or (edge_to == 0) or (edge_to == -1):
+                fd5.write(f"Error 5 : in edge {e.uuid} : edge is created after From node {nfrom.uuid} existence\n")
 
         if edge_to == -1:
-            fd6.write(f"Error 6 : in edge {e.uuid} : edge is created before To node {nto.uuid} existence\n")
+            if swap or (from_edge == 0):
+                fd6.write(f"Error 6 : in edge {e.uuid} : edge is created before To node {nto.uuid} existence\n")
             
         if edge_to == 1:
             fd7.write(f"Error 7 : in edge {e.uuid} : edge is created after To node {nto.uuid} existence\n")
@@ -65,4 +71,4 @@ def integrity(path_template):
     fd6.close()
     fd7.close()
     
-integrity("log/estimate_err")
+integrity("log/err")
