@@ -12,41 +12,41 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 	efrom = g.edges_from(nuuid)
 
 	#If the first_seen is not usable
-	if (not g.nodes_dict[nuuid].first_seen()):
+	#if (not g.nodes_dict[nuuid].first_seen()):
 
-		#Get the first appearences of the edges connected to the node
-		allFst = [e.estimated_first for e in eto+efrom]
-		if (len(allFst)>0):
+	#Get the first appearences of the edges connected to the node
+	allFst = [e.estimated_first for e in eto+efrom]
+	if (len(allFst)>0):
 
-			mini = min(allFst)	#Get the earliest of all
+		mini = min(allFst)	#Get the earliest of all
 
-			#Track wether the node will be changed
-			if (mini != g.nodes_dict[nuuid].estimated_first):
-				changed = True
-			
-			#Getting the first possible call to the node (min first_seen des edges qui arrivent)
-			g.nodes_dict[nuuid].estimated_first = mini
+		#Track wether the node will be changed
+		if (mini != g.nodes_dict[nuuid].estimated_first):
+			changed = True
+		
+		#Getting the first possible call to the node (min first_seen des edges qui arrivent)
+		g.nodes_dict[nuuid].estimated_first = mini
 
-		else:
-			floating_nodes.append(nuuid)
+	else:
+		floating_nodes.append(nuuid)
 		
 	#Same as above for the after
-	if (not g.nodes_dict[nuuid].last_seen()):
+	#if (not g.nodes_dict[nuuid].last_seen()):
 		
-		allLast = [e.estimated_last for e in eto+efrom]
-		if (len(allLast)>0):
+	allLast = [e.estimated_last for e in eto+efrom]
+	if (len(allLast)>0):
 
-			maxi = max(allLast)
+		maxi = max(allLast)
 
-			#Track wether the node will be changed
-			if (maxi != g.nodes_dict[nuuid].estimated_last):
-				changed = True
+		#Track wether the node will be changed
+		if (maxi != g.nodes_dict[nuuid].estimated_last):
+			changed = True
 
-			#Getting the flast possible call from the node (max last_seen des edges qui arrivent)
-			g.nodes_dict[nuuid].estimated_last = maxi
+		#Getting the flast possible call from the node (max last_seen des edges qui arrivent)
+		g.nodes_dict[nuuid].estimated_last = maxi
 
-		else:
-			floating_nodes.append(nuuid)
+	else:
+		floating_nodes.append(nuuid)
 
 	if (changed):
 		nodes_estimated.append([nuuid,g.nodes_dict[nuuid].estimated_first,g.nodes_dict[nuuid].estimated_last])
@@ -64,23 +64,23 @@ def guessTimeEdge(euuid,edges_estimated):
 	etime = g.edges_dict[euuid].timestamp()
 
 	#If we need to make a guess because the time of the edge cannot be used
-	if (not etime):
+	#if (not etime):
 
 		#Estimated time is by delault the time of the node if it exitst (and is legit ie. not the time of analysis)
 		#otherwise it will be the first (respectively last) time available in the graph (that is not the analysis time)
-		from_time_fst = nfrom.estimated_first
-		to_time_last = nto.estimated_last
-		from_uuid = nfrom.uuid
-		to_uuid = nto.uuid
+	from_time_fst = nfrom.estimated_first
+	to_time_last = nto.estimated_last
+	from_uuid = nfrom.uuid
+	to_uuid = nto.uuid
 
-		#If the node before has a usable seen_first time, and it is more precise than the current time, change it
-		if (from_time_fst > g.edges_dict[euuid].estimated_first):
-			g.edges_dict[euuid].estimated_first = from_time_fst
-			changed = True
-		#Same thing as above but for the node after
-		if (to_time_last < g.edges_dict[euuid].estimated_last):
-			g.edges_dict[euuid].estimated_last = to_time_last
-			changed = True
+	#If the node before has a usable seen_first time, and it is more precise than the current time, change it
+	if (from_time_fst > g.edges_dict[euuid].estimated_first):
+		g.edges_dict[euuid].estimated_first = from_time_fst
+		changed = True
+	#Same thing as above but for the node after
+	if (to_time_last < g.edges_dict[euuid].estimated_last):
+		g.edges_dict[euuid].estimated_last = to_time_last
+		changed = True
 			
 
 	#Writing in the log file
@@ -144,7 +144,7 @@ delta = mu[0]				#Initialisation of the difference between two mu value
 gatherFnodes = True			#Set to false if you don't want to gather the floating nodes in a file
 
 # As long as we learn things (it will move the delta), threshold can be moved to fit the graph
-while (delta > 0):
+while (delta != 0):
 	delta = lauchAnalysis(mu,gatherFnodes)
 	gatherFnodes = False	#Floating nodes need gathering only once
 
