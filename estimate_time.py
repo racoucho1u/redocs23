@@ -99,11 +99,34 @@ def guessTimeEdge(euuid,edges_estimated):
 
 	return(edges_estimated)
 
+def countNotTimed(euuid,total_correctible):
+
+
+	#Getting node from, node to and timestamp of the edge
+	nfrom = g.edges_dict[euuid].begin()
+	nto = g.edges_dict[euuid].end()
+	etime = g.edges_dict[euuid].timestamp()
+
+	#If we need to make a guess because the time of the edge cannot be used
+	if (not etime):
+		if (nfrom.first_seen() or nfrom.last_seen() or nto.first_seen() or nto.last_seen()):
+				total_correctible += 1
+
+	return(total_correctible)
+
+	
+
 def lauchAnalysis(mu,gatherFnodes):
 
 	edges_estimated = []
 	nodes_estimated = []
 	floating_nodes = []
+
+	total_correctible = 0
+
+	#for euuid in g.edges_dict:
+	#	total_correctible = countNotTimed(euuid,total_correctible)
+	#print(total_correctible)
 
 	#Go through all edges to learn from their surroundings
 	for euuid in g.edges_dict:
@@ -156,8 +179,8 @@ delta = mu[0]				#Initialisation of the difference between two mu value
 gatherFnodes = True			#Set to false if you don't want to gather the floating nodes in a file
 
 # As long as we learn things (it will move the delta), threshold can be moved to fit the graph
-#while (delta != 0):
-for i in range(2):
+while (delta != 0):
+#for i in range(1):
 	delta = lauchAnalysis(mu,gatherFnodes)
 	gatherFnodes = False	#Floating nodes need gathering only once
 
