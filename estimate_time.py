@@ -15,7 +15,10 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 	#if (not g.nodes_dict[nuuid].first_seen()):
 
 	#Get the first appearences of the edges connected to the node
-	allFst = [e.estimated_first for e in eto+efrom]
+	allFst = []
+	for e in eto+efrom:
+		if e.estimated_first_bool:
+			allFst.append(e.estimated_first)
 	if (len(allFst)>0):
 
 		mini = min(allFst)	#Get the earliest of all
@@ -33,7 +36,10 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 	#Same as above for the after
 	#if (not g.nodes_dict[nuuid].last_seen()):
 		
-	allLast = [e.estimated_last for e in eto+efrom]
+	allLast = []
+	for e in eto+efrom:
+		if e.estimated_last_bool:
+			allLast.append(e.estimated_last)
 	if (len(allLast)>0):
 
 		maxi = max(allLast)
@@ -55,9 +61,6 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 
 def guessTimeEdge(euuid,edges_estimated):
 
-	# Log if a change has been made
-	changed = False
-
 	#Getting node from, node to and timestamp of the edge
 	nfrom = g.edges_dict[euuid].begin()
 	nto = g.edges_dict[euuid].end()
@@ -74,17 +77,17 @@ def guessTimeEdge(euuid,edges_estimated):
 	to_uuid = nto.uuid
 
 	#If the node before has a usable seen_first time, and it is more precise than the current time, change it
-	if (from_time_fst < g.edges_dict[euuid].estimated_first):
+	if (from_time_fst < g.edges_dict[euuid].estimated_first and (nfrom.estimated_first_bool or nfrom.first_seen())):
 		g.edges_dict[euuid].estimated_first = from_time_fst
-		changed = True
+		g.edges_dict[euuid].estimated_first_bool
 	#Same thing as above but for the node after
-	if (to_time_last > g.edges_dict[euuid].estimated_last):
+	if (to_time_last > g.edges_dict[euuid].estimated_last and (nto.estimated_last_bool or nfrom.last_seen())):
 		g.edges_dict[euuid].estimated_last = to_time_last
-		changed = True
+		g.edges_dict[euuid].estimated_last_bool = True
 			
 
 	#Writing in the log file
-	if (changed):
+	if (g.edges_dict[euuid].estimated_last_bool or g.edges_dict[euuid].estimated_first_bool):
 		edges_estimated.append([euuid,g.edges_dict[euuid].estimated_first,g.edges_dict[euuid].estimated_last])
 
 	return(edges_estimated)
@@ -104,12 +107,12 @@ def lauchAnalysis(mu,gatherFnodes):
 
 	with open("nodes_estimated.log","a") as ne:
 		for n in nodes_estimated:
-			ne.write(f"Node: {n[0]} | estimated_first: {n[1]} | estimated_last: {n[2]}")
+			ne.write(f"Node: {n[0]} | estimated_first: {n[1]} | estimated_last: {n[2]}\n")
 	print(f"Changed nodes: {len(nodes_estimated)}")
 
 	with open("edges_estimated.log","a") as ee:
 		for e in edges_estimated:
-			ee.write(f"Edge: {e[0]} | estimated_first: {e[1]} | estimated_last: {e[2]}")
+			ee.write(f"Edge: {e[0]} | estimated_first: {e[1]} | estimated_last: {e[2]}\n")
 	print(f"Changed edges: {len(edges_estimated)}")
 
 
@@ -144,7 +147,8 @@ delta = mu[0]				#Initialisation of the difference between two mu value
 gatherFnodes = True			#Set to false if you don't want to gather the floating nodes in a file
 
 # As long as we learn things (it will move the delta), threshold can be moved to fit the graph
-while (delta != 0):
+#while (delta != 0):
+for i in range(2):
 	delta = lauchAnalysis(mu,gatherFnodes)
 	gatherFnodes = False	#Floating nodes need gathering only once
 
