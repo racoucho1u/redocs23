@@ -20,6 +20,7 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 		if e.estimated_first_bool or e.timestamp():
 			allFst.append(e.estimated_first)
 
+	#If we have an intresting information from the edges and no hard information from the log
 	if (len(allFst)>0 and not g.nodes_dict[nuuid].first_seen()):
 
 		mini = min(allFst)	#Get the earliest of all
@@ -29,9 +30,6 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 		g.nodes_dict[nuuid].estimated_first = mini
 		g.nodes_dict[nuuid].estimated_first_bool = True
 
-
-	else:
-		floating_nodes.append(nuuid)
 		
 	#Same as above for the after
 	#if (not g.nodes_dict[nuuid].last_seen()):
@@ -52,11 +50,12 @@ def guessTimeNode(nuuid,nodes_estimated,floating_nodes):
 		g.nodes_dict[nuuid].estimated_last = maxi
 		g.nodes_dict[nuuid].estimated_last_bool = True
 
-	else:
-		floating_nodes.append(nuuid)
-
 	if (changed):
 		nodes_estimated.append([nuuid,g.nodes_dict[nuuid].estimated_first,g.nodes_dict[nuuid].estimated_last])
+
+	if (eto+efrom == []):
+		#print("Fing node")
+		floating_nodes.append(nuuid)
 
 	return((nodes_estimated,floating_nodes))
 
@@ -77,11 +76,13 @@ def guessTimeEdge(euuid,edges_estimated):
 	from_uuid = nfrom.uuid
 	to_uuid = nto.uuid
 
-	#If the node before has a usable seen_first time, and it is more precise than the current time, change it
+	#If the node before has a usable seen_first time or has been changed
 	if (nfrom.estimated_first_bool or nfrom.first_seen()):
+		#If we have info on that node but it has inconsistencies
 		if (etime and g.edges_dict[euuid].check_begin_timestamps()!=0):
 			g.edges_dict[euuid].estimated_first = from_time_fst
 			g.edges_dict[euuid].estimated_first_bool = True
+		#We have no info on the edge or we want to update our guess
 		else:
 			g.edges_dict[euuid].estimated_first = from_time_fst
 			g.edges_dict[euuid].estimated_first_bool = True
@@ -109,6 +110,7 @@ def lauchAnalysis(mu,gatherFnodes):
 		edges_estimated = guessTimeEdge(euuid,edges_estimated)
 	#Go through all nodes to learn from their surroundings
 	for nuuid in g.nodes_dict:
+		#print(len(floating_nodes))
 		(nodes_estimated,floating_nodes) = guessTimeNode(nuuid,nodes_estimated,floating_nodes)
 
 	with open("nodes_estimated.log","a") as ne:
@@ -136,6 +138,7 @@ def lauchAnalysis(mu,gatherFnodes):
 	#	for e in edges_estimated:
 	#		csv_w.writerow([f"{e[0]}", f"{e[1]}", f"{e[2]}"])
 
+	#Writes the nodes with no edges to or from
 	if (gatherFnodes):
 		with open("floating_nodes.log","a") as fn:
 			for n in floating_nodes:
