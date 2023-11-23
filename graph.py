@@ -136,6 +136,12 @@ class Node:
 		self.type = node_type
 		self.seen = seen
 
+	def __repr__(self):
+		return str(self)
+
+	def __str__(self):
+		return f"{self.uuid}({self.type})"
+
 	def _build(self):
 		if self._first_seen:
 			self.estimated_first = self._first_seen
@@ -145,6 +151,8 @@ class Node:
 			self.estimated_last = self._last_seen
 		else:
 			self.estimated_last = LAST_TIMESTAMP
+		self.estimated_first_bool = False
+		self.estimated_last_bool = False
 
 	def __bool__(self):
 		"""
@@ -188,6 +196,12 @@ class Edge:
 		self.name = name	
 		self.seen = seen
 
+	def __repr__(self):
+		return str(self)
+
+	def __str__(self):
+		return f"{self.uuid}({self.reason})"
+
 	def _build(self):
 		if self._timestamp:
 			self.estimated_first = self._timestamp
@@ -195,6 +209,9 @@ class Edge:
 		else:
 			self.estimated_first = FIRST_TIMESTAMP
 			self.estimated_last = LAST_TIMESTAMP
+		self.estimated_first_bool = False
+		self.estimated_last_bool = False
+
 
 	def check_begin_timestamps(self):
 		"""
@@ -261,7 +278,7 @@ class Graph:
 		self._raw_nodes_filename = raw_nodes_filename
 		self._raw_edges_filename = raw_edges_filename
 		self._backup_mode = backup_mode
-		self._backup_filename = "." + hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0004").encode()).hexdigest().zfill(40)[:16] + ".data"
+		self._backup_filename = "." + hashlib.sha1((self._raw_nodes_filename + self._raw_edges_filename + "0006").encode()).hexdigest().zfill(40)[:16] + ".data"
 
 		if self._backup_mode:
 			print("backup mode enable")
@@ -455,8 +472,5 @@ class Graph:
 
 
 g = Graph(nodes_filename, edges_filename)
-
-
-
 
 
