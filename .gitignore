@@ -16,6 +16,10 @@ l2.json
 push_graph.sh
 .*.data
 
+*nodes_estimated.log
+*floating_nodes.log
+*edges_estimated.log
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
