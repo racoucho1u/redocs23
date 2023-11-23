@@ -1,0 +1,169 @@
+{
+    "file.path": {
+        "file.path,CONTAINS,file.resource": 661484,
+        "file.path,CONTAINS,file.path": 125874,
+        "file.path,CONTAINS,ghost_node": 1880
+    },
+    "system.process": {
+        "system.process,INDICATE,log.evtx.event": 182179,
+        "system.process,EXECUTE,script.powershell": 718,
+        "system.process,EXECUTE,file.resource": 137,
+        "system.process,START,system.process": 84,
+        "system.process,STOP,system.session": 71,
+        "system.process,INDICATE,indicator.yara": 17,
+        "system.process,CONTAINS,text.base64": 15,
+        "system.process,INDICATE,ghost_node": 3,
+        "system.process,START,system.session": 3
+    },
+    "log.evtx.event": {
+        "log.evtx.event,INDICATE,indicator.sigma": 2079
+    },
+    "system.session": {
+        "system.session,EXECUTE,system.process": 4670
+    },
+    "indicator.sigma": {
+        "indicator.sigma,USES,mitre.attack": 2116
+    },
+    "network.url": {
+        "network.url,HAS,network.domain": 24
+    },
+    "raw.data": {
+        "raw.data,CONTAINS,file.resource": 161,
+        "raw.data,RECEIVE,network.url": 34,
+        "raw.data,CONTAINS,file.path": 6
+    },
+    "archive.7z": {
+        "archive.7z,INITIAL,archive.7z": 5,
+        "archive.7z,CONTAINS,file.resource": 3,
+        "archive.7z,CONTAINS,file.path": 2,
+        "archive.7z,CONTAINS,system.host": 1
+    },
+    "network.domain": {
+        "network.domain,SEND,network.ip": 29,
+        "network.domain,HAS,network.domain": 22,
+        "network.domain,RECEIVE,network.ip": 12
+    },
+    "text.xml": {
+        "text.xml,RECEIVE,network.url": 35
+    },
+    "file.resource": {
+        "file.resource,CONTAINS,file.resource": 2227,
+        "file.resource,COMPRESS,log.evtx": 675,
+        "file.resource,HAS,application.pe": 650,
+        "file.resource,COMPRESS,raw.data": 540,
+        "file.resource,COMPRESS,system.task": 322,
+        "file.resource,EXECUTE,system.process": 142,
+        "file.resource,COMPRESS,database.registry": 66,
+        "file.resource,COMPRESS,text.json": 55,
+        "file.resource,START,system.process": 50,
+        "file.resource,COMPRESS,raw.link": 29,
+        "file.resource,START,script.powershell": 22,
+        "file.resource,COMPRESS,text.ini": 20,
+        "file.resource,COMPRESS,text.powershell.transcript": 16,
+        "file.resource,COMPRESS,text.plain": 10,
+        "file.resource,COMPRESS,image.png": 9,
+        "file.resource,COMPRESS,document.doc": 2,
+        "file.resource,CONTAINS,file.path": 2,
+        "file.resource,COMPRESS,document.ppt": 2,
+        "file.resource,COMPRESS,database.sqlite": 2,
+        "file.resource,COMPRESS,text.xml": 1,
+        "file.resource,COMPRESS,text.yara": 1,
+        "file.resource,COMPRESS,script.javascript": 1,
+        "file.resource,COMPRESS,image.svg+xml": 1,
+        "file.resource,COMPRESS,network.pcap": 1,
+        "file.resource,COMPRESS,log.setupapi": 1
+    },
+    "network.ip": {
+        "network.ip,SEND,raw.data": 59,
+        "network.ip,SEND,text.xml": 42,
+        "network.ip,SEND,network.url": 26,
+        "network.ip,SEND,text.html": 4,
+        "network.ip,LOGON,system.account": 3,
+        "network.ip,CONNECT,system.host": 2,
+        "network.ip,DISCONNECT,system.host": 1,
+        "network.ip,DISCONNECT,system.workgroup": 1,
+        "network.ip,SEND,image.png": 1,
+        "network.ip,SEND,application.x-dbf": 1
+    },
+    "application.pe": {
+        "application.pe,START,system.process": 649,
+        "application.pe,USES,mitre.attack": 24,
+        "application.pe,INDICATE,indicator.yara": 23,
+        "application.pe,CONTAINS,application.pe.sections": 12
+    },
+    "system.task": {
+        "system.task,EXECUTE,system.process": 104
+    },
+    "network.pcap": {
+        "network.pcap,CONTAINS,network.ip": 4
+    },
+    "system.identity": {
+        "system.identity,USES,system.session": 4139,
+        "system.identity,EXECUTE,script.powershell": 200,
+        "system.identity,STOP,system.session": 71,
+        "system.identity,START,system.session": 35,
+        "system.identity,EXECUTE,system.process": 9,
+        "system.identity,EXECUTE,system.task": 7,
+        "system.identity,CREATE,system.task": 2
+    },
+    "system.account": {
+        "system.account,EXECUTE,system.task": 133,
+        "system.account,HAS,system.identity": 120,
+        "system.account,USES,system.identity": 23,
+        "system.account,CREATE,system.task": 10
+    },
+    "text.powershell.transcript": {
+        "text.powershell.transcript,INDICATE,indicator.yara": 23,
+        "text.powershell.transcript,CONTAINS,text.base64": 13
+    },
+    "text.plain": {
+        "text.plain,INDICATE,indicator.yara": 24,
+        "text.plain,CONTAINS,text.base64": 7
+    },
+    "database.registry": {
+        "database.registry,CONTAINS,text.json": 258
+    },
+    "script.powershell": {
+        "script.powershell,INDICATE,indicator.yara": 97,
+        "script.powershell,CONTAINS,text.base64": 96
+    },
+    "text.base64": {
+        "text.base64,INDICATE,indicator.yara": 21,
+        "text.base64,ENCODE,application.pe": 12,
+        "text.base64,ENCODE,text.plain.utf16": 10
+    },
+    "application.pe.sections": {
+        "application.pe.sections,HAS,raw.data": 75,
+        "application.pe.sections,USES,mitre.attack": 6
+    },
+    "text.plain.utf16": {
+        "text.plain.utf16,CONTAINS,text.base64": 7
+    },
+    "system.host": {
+        "system.host,CONNECT,system.account": 124,
+        "system.host,CONTAINS,file.path": 13,
+        "system.host,LOGON,system.account": 6,
+        "system.host,CONTAINS,file.resource": 4,
+        "system.host,LOGOFF,system.account": 3,
+        "system.host,HAS,system.workgroup": 2,
+        "system.host,CONNECT,system.workgroup": 2,
+        "system.host,HAS,network.ip": 1,
+        "system.host,CONTAINS,system.host": 1
+    },
+    "system.group": {
+        "system.group,EXECUTE,system.task": 44,
+        "system.group,EXECUTE,text.xml": 1
+    },
+    "system.workgroup": {
+        "system.workgroup,EXECUTE,system.task": 14,
+        "system.workgroup,CONTAINS,system.host": 8,
+        "system.workgroup,CONNECT,system.account": 4,
+        "system.workgroup,CONTAINS,network.ip": 3,
+        "system.workgroup,HAS,system.identity": 2,
+        "system.workgroup,LOGOFF,system.account": 1
+    },
+    "ghost_node": {
+        "ghost_node,CONTAINS,file.resource": 394,
+        "ghost_node,CONTAINS,file.path": 115
+    }
+}
