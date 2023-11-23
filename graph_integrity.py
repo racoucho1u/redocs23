@@ -2,6 +2,10 @@ from graph import g
 
 def integrity(path_template):
     """_summary_
+    
+    Args:
+        path_template : prefix name of the future log
+    
     produce 7 log files :
     Error 1 : the parent node of the edge doesn't exist in the jsonl
     Error 2 : the child node of the edge doesn't exist in the jsonl
